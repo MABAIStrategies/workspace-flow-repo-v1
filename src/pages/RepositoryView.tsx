@@ -9,6 +9,50 @@ const RepositoryView: React.FC<RepositoryViewProps> = ({ onFlowSelect }) => {
   const [filterSearch, setFilterSearch] = useState("");
   const [filterDept, setFilterDept] = useState<Set<string>>(new Set());
   const [filterLevel, setFilterLevel] = useState<Set<string>>(new Set());
+  const [userFlows, setUserFlows] = useState<any[]>([]);
+
+  // Load User Flows from DB
+  React.useEffect(() => {
+    const fetchUserFlows = async () => {
+        const { data } = await import('../lib/supabase').then(m => m.supabase.from('workflows').select('*').order('created_at', { ascending: false }));
+        
+        if (data) {
+            const mapped = data.map((row: any) => {
+                // Parse metadata
+                let meta = { dept: 'General', level: 'hitl', tools: [] };
+                try {
+                    if (row.description && row.description.startsWith('{')) {
+                        const parsed = JSON.parse(row.description);
+                        if (parsed.meta) {
+                             meta = { 
+                                 dept: parsed.meta.dept || 'General', 
+                                 level: parsed.meta.level || 'hitl', 
+                                 tools: parsed.meta.tools || [] 
+                             };
+                        }
+                    }
+                } catch (e) {}
+
+                return {
+                    id: `db-${row.id}`, // specific ID format
+                    rank: 0, // Top rank
+                    name: row.name,
+                    category: meta.level,
+                    dept: meta.dept,
+                    tools: meta.tools,
+                    timeSaved: 'Draft',
+                    action: 'Custom Workflow',
+                    isUser: true // Flag for UI
+                };
+            });
+            setUserFlows(mapped);
+        }
+    };
+    fetchUserFlows();
+  }, []);
+
+  // Combine Lists
+  const allFlows = [...userFlows, ...flowData];
 
   // Toggle helpers
   const toggleDept = (dept: string) => {
@@ -25,14 +69,19 @@ const RepositoryView: React.FC<RepositoryViewProps> = ({ onFlowSelect }) => {
       setFilterLevel(newSet);
   };
   
-  const filtered = flowData.filter(flow => {
+  const filtered = allFlows.filter(flow => {
     const matchesSearch = flow.name.toLowerCase().includes(filterSearch.toLowerCase()) || 
                           flow.action.toLowerCase().includes(filterSearch.toLowerCase());
     const matchesDept = filterDept.size === 0 || filterDept.has(flow.dept);
     const matchesLevel = filterLevel.size === 0 || filterLevel.has(flow.category);
     
     return matchesSearch && matchesDept && matchesLevel;
-  }).sort((a, b) => a.rank - b.rank);
+  }).sort((a, b) => {
+      // User flows first, then rank
+      if (a.isUser && !b.isUser) return -1;
+      if (!a.isUser && b.isUser) return 1;
+      return a.rank - b.rank;
+  });
 
   return (
     <div className="flex flex-1 overflow-hidden max-w-[1920px] mx-auto w-full transition-opacity duration-300">
@@ -130,12 +179,15 @@ const RepositoryView: React.FC<RepositoryViewProps> = ({ onFlowSelect }) => {
             let badgeText = "Background";
             if (flow.category === "hitl") { badgeText = "Human Loop"; }
             else if (flow.category === "triggered") { badgeText = "Triggered"; }
+            
+            // Override for User Flows
+            if ((flow as any).isUser) badgeText = "My Flow";
 
             // Tailwind doesn't support dynamic class interpolation easily without safelisting 
             // So we use standard classes for simplicity in this port, or inline styles/helper function
             // For MVP: simplified colors
-            const badgeClass = flow.category === "hitl" ? "bg-amber-50 text-amber-600" : (flow.category === "triggered" ? "bg-blue-50 text-blue-600" : "bg-slate-50 text-slate-600");
-            const barClass = flow.category === "hitl" ? "bg-amber-500" : (flow.category === "triggered" ? "bg-blue-500" : "bg-slate-500");
+            const badgeClass = (flow as any).isUser ? "bg-purple-100 text-purple-700 ring-1 ring-purple-500/20" : (flow.category === "hitl" ? "bg-amber-50 text-amber-600" : (flow.category === "triggered" ? "bg-blue-50 text-blue-600" : "bg-slate-50 text-slate-600"));
+            const barClass = (flow as any).isUser ? "bg-purple-600" : (flow.category === "hitl" ? "bg-amber-500" : (flow.category === "triggered" ? "bg-blue-500" : "bg-slate-500"));
 
             return (
                 <div key={flow.id} onClick={() => onFlowSelect(flow)} className="group bg-white rounded-2xl shadow-sm border border-slate-200 p-0 cursor-pointer card-hover transition-all-300 flex flex-col h-full relative overflow-hidden">

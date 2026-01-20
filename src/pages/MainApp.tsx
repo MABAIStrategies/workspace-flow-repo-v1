@@ -1,6 +1,72 @@
 import React, { useState } from 'react';
 import RepositoryView from './RepositoryView';
 import StudioView from './StudioView';
+import { supabase } from '../lib/supabase';
+
+const ProfileForm: React.FC = () => {
+    const [name, setName] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [msg, setMsg] = useState('');
+
+    React.useEffect(() => {
+        getProfile();
+    }, []);
+
+    const getProfile = async () => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                let { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+                if (data) {
+                    setName(data.full_name || '');
+                }
+            }
+        } catch (error) {}
+    };
+
+    const updateProfile = async () => {
+        setLoading(true);
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const updates = {
+            id: user.id,
+            full_name: name,
+            updated_at: new Date(),
+        };
+
+        const { error } = await supabase.from('profiles').upsert(updates);
+        if (error) setMsg('Error');
+        else setMsg('Saved!');
+        setLoading(false);
+        setTimeout(() => setMsg(''), 3000);
+    };
+
+    return (
+        <div className="space-y-6 max-w-md">
+            <div>
+                <label className="block text-sm font-medium leading-6 text-slate-900">Display Name</label>
+                <div className="mt-2">
+                    <input 
+                        value={name} onChange={e => setName(e.target.value)}
+                        type="text" className="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6 px-3" placeholder="Enter your name" 
+                    />
+                </div>
+            </div>
+            
+            <div className="pt-4 flex items-center gap-4">
+                <button 
+                    onClick={updateProfile}
+                    disabled={loading}
+                    className="rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50"
+                >
+                    {loading ? 'Saving...' : 'Save Changes'}
+                </button>
+                {msg && <span className={`text-sm font-bold ${msg === 'Error' ? 'text-red-500' : 'text-emerald-600'}`}>{msg}</span>}
+            </div>
+        </div>
+    );
+};
 
 const MainApp: React.FC = () => {
     const [view, setView] = useState<'repo' | 'studio' | 'profile'>('repo');
@@ -100,43 +166,11 @@ const MainApp: React.FC = () => {
                 <div className="flex-1 overflow-y-auto bg-slate-50 p-4 sm:p-8 flex justify-center">
                     <div className="max-w-2xl w-full bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
                         <h2 className="text-2xl font-bold font-display text-slate-900 mb-6">User Profile</h2>
-                        <div className="flex items-center gap-6 mb-8">
-                            <div className="relative group cursor-pointer">
-                                <div className="h-24 w-24 rounded-full bg-slate-200 border-4 border-white shadow-lg overflow-hidden">
-                                     <img src={`https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff&size=200`} alt="Profile" />
-                                </div>
-                                <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <span className="material-symbols-outlined text-white">edit</span>
-                                </div>
-                            </div>
-                            <div>
-                                <h3 className="text-xl font-bold text-slate-900">Current User</h3>
-                                <p className="text-slate-500">user@example.com</p>
-                                <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10 mt-2">Admin</span>
-                            </div>
-                        </div>
-
-                        <div className="space-y-6 max-w-md">
-                            <div>
-                                <label className="block text-sm font-medium leading-6 text-slate-900">Display Name</label>
-                                <div className="mt-2">
-                                    <input type="text" className="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6 px-3" placeholder="Enter your name" />
-                                </div>
-                            </div>
-                             <div>
-                                <label className="block text-sm font-medium leading-6 text-slate-900">Job Title</label>
-                                <div className="mt-2">
-                                    <input type="text" className="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6 px-3" placeholder="e.g. Head of Operations" />
-                                </div>
-                            </div>
-                            <div className="pt-4">
-                                <button className="rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Save Changes</button>
-                            </div>
-                        </div>
+                        <ProfileForm />
                     </div>
                 </div>
             )}
-
+            
             {/* Detail Modal (Simplified implementation for MVP) */}
             {selectedFlow && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6" onClick={() => setSelectedFlow(null)}>

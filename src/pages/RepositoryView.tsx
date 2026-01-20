@@ -55,12 +55,8 @@ const RepositoryView: React.FC<RepositoryViewProps> = ({ onFlowSelect }) => {
   const allFlows = [...userFlows, ...flowData];
 
   // Toggle helpers
-  const toggleDept = (dept: string) => {
-      const newSet = new Set(filterDept);
-      if (newSet.has(dept)) newSet.delete(dept);
-      else newSet.add(dept);
-      setFilterDept(newSet);
-  };
+  // toggleDept resolved to be unused in current implementation (using direct setFilterDept in UI or not used)
+  // Removing to clear lint warning
   
   const toggleLevel = (cat: string) => {
       const newSet = new Set(filterLevel);

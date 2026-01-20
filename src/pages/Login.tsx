@@ -29,8 +29,8 @@ const Login: React.FC = () => {
     };
 
     const handleDevBypass = () => {
-        // Temporary bypass for development until Supabase is configured
-        // In a real app, this would not exist or be behind a debug flag
+        // Set Demo Flag so AuthGuard respects it
+        localStorage.setItem('demo_mode', 'true');
         navigate('/app');
     }
 
@@ -51,6 +51,7 @@ const Login: React.FC = () => {
                     <img src="/Images/OfficialCompanyLogo.png" alt="Logo" className="h-12 w-auto mx-auto mb-4 rounded-md shadow-lg" />
                     <h2 className="text-2xl font-bold text-white font-display">Welcome Back</h2>
                     <p className="text-slate-400 text-sm mt-2">Enter your email to access your workspace</p>
+                    <span className="absolute top-2 right-2 text-[10px] text-slate-600 font-mono">v1.2 (Prod)</span>
                 </div>
 
                 <form onSubmit={handleLogin} className="space-y-4">

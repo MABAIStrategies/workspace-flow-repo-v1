@@ -9,14 +9,22 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
 
     useEffect(() => {
         // Check active session
-        supabase.auth.getSession().then(({ data: { session } }) => {
+        const checkSession = async () => {
+            // 1. Check if user is in "Demo Mode" (Bypass)
+            const isDemo = localStorage.getItem('demo_mode') === 'true';
+            if (isDemo) {
+                setSession({ user: { id: 'demo-user', email: 'demo@example.com' } });
+                setLoading(false);
+                return;
+            }
+
+            // 2. Check Real Supabase Session
+            const { data: { session } } = await supabase.auth.getSession();
             setSession(session);
-            // TEMPORARY: If we don't have supabase keys, we might want to bypass or show error
-            // checks if session exists, else redirect to login
-            // For Dev Mode, since keys are missing, session will be null.
-            // setSession(true); // Uncomment to fake auth
             setLoading(false);
-        });
+        };
+        
+        checkSession();
 
         // Listen for changes
         const {
@@ -42,9 +50,6 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
     
     if (!session) {
         // Redirect to login if not authenticated
-        // We use useEffect to avoid side-effects during render, but for simple guard logic:
-        // Ideally returns null and useEffect triggers navigation.
-        // For simplicity in this functional component:
         setTimeout(() => navigate('/login'), 0);
         return null; 
     }

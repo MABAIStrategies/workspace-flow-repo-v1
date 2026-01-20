@@ -7,17 +7,36 @@ interface RepositoryViewProps {
 
 const RepositoryView: React.FC<RepositoryViewProps> = ({ onFlowSelect }) => {
   const [filterSearch, setFilterSearch] = useState("");
-  // In a real app, these would be managed by a more complex filter state or context
-  // const [filterDept, setFilterDept] = useState<string[]>([]);
+  const [filterDept, setFilterDept] = useState<Set<string>>(new Set());
+  const [filterLevel, setFilterLevel] = useState<Set<string>>(new Set());
+
+  // Toggle helpers
+  const toggleDept = (dept: string) => {
+      const newSet = new Set(filterDept);
+      if (newSet.has(dept)) newSet.delete(dept);
+      else newSet.add(dept);
+      setFilterDept(newSet);
+  };
   
-  const filtered = flowData.filter(flow => 
-    flow.name.toLowerCase().includes(filterSearch.toLowerCase()) || 
-    flow.action.toLowerCase().includes(filterSearch.toLowerCase())
-  ).sort((a, b) => a.rank - b.rank);
+  const toggleLevel = (cat: string) => {
+      const newSet = new Set(filterLevel);
+      if (newSet.has(cat)) newSet.delete(cat);
+      else newSet.add(cat);
+      setFilterLevel(newSet);
+  };
+  
+  const filtered = flowData.filter(flow => {
+    const matchesSearch = flow.name.toLowerCase().includes(filterSearch.toLowerCase()) || 
+                          flow.action.toLowerCase().includes(filterSearch.toLowerCase());
+    const matchesDept = filterDept.size === 0 || filterDept.has(flow.dept);
+    const matchesLevel = filterLevel.size === 0 || filterLevel.has(flow.category);
+    
+    return matchesSearch && matchesDept && matchesLevel;
+  }).sort((a, b) => a.rank - b.rank);
 
   return (
     <div className="flex flex-1 overflow-hidden max-w-[1920px] mx-auto w-full transition-opacity duration-300">
-      {/* Sidebar Filters - Static for Phase 2 MVP */}
+      {/* Sidebar Filters - Functional Phase 2 */}
       <aside className="w-80 bg-gradient-to-b from-blue-600 to-indigo-700 border-r border-blue-800 flex-col hidden md:flex overflow-y-auto custom-scrollbar z-20 text-white">
         <div className="p-6 space-y-8">
             <div>
@@ -35,8 +54,46 @@ const RepositoryView: React.FC<RepositoryViewProps> = ({ onFlowSelect }) => {
                     />
                 </div>
             </div>
-            {/* Filter sections would go here (Dept, Level, Tools) */}
-            <div className="text-blue-200 text-sm italic">Filters enabled in next update...</div>
+            
+            {/* Dept Filter */}
+            <div>
+                <label className="text-xs font-bold text-blue-200 uppercase tracking-wider mb-3 block flex justify-between">
+                    Departments
+                    {filterDept.size > 0 && <span onClick={() => setFilterDept(new Set())} className="text-[10px] underline cursor-pointer hover:text-white">Clear</span>}
+                </label>
+                <div className="space-y-2">
+                    {["Sales", "Marketing", "HR", "Operations", "Finance", "Executive", "IT/Eng"].map(d => (
+                        <label key={d} className="flex items-center gap-3 cursor-pointer group hover:bg-white/5 p-2 rounded-lg transition-colors">
+                            <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${filterDept.has(d) ? 'bg-white border-white' : 'border-blue-300/50 group-hover:border-white/80'}`}>
+                                {filterDept.has(d) && <span className="material-symbols-outlined text-[10px] text-blue-600 font-bold">check</span>}
+                            </div>
+                            <span className={`text-sm ${filterDept.has(d) ? 'text-white font-bold' : 'text-blue-100 group-hover:text-white'}`}>{d}</span>
+                        </label>
+                    ))}
+                </div>
+            </div>
+
+            {/* Level Filter */}
+             <div>
+                <label className="text-xs font-bold text-blue-200 uppercase tracking-wider mb-3 block flex justify-between">
+                    Automation Level
+                    {filterLevel.size > 0 && <span onClick={() => setFilterLevel(new Set())} className="text-[10px] underline cursor-pointer hover:text-white">Clear</span>}
+                </label>
+                <div className="space-y-2">
+                    {[
+                        {id: 'hitl', label: 'Human in the Loop', icon: 'person'},
+                        {id: 'triggered', label: 'Triggered Auto', icon: 'bolt'},
+                        {id: 'background', label: 'Background', icon: 'settings_suggest'}
+                    ].map(l => (
+                         <label key={l.id} onClick={() => toggleLevel(l.id)} className={`flex items-center gap-3 cursor-pointer p-2 rounded-lg border transition-all ${filterLevel.has(l.id) ? 'bg-white/10 border-white/40 shadow-sm' : 'border-transparent hover:bg-white/5'}`}>
+                            <span className="material-symbols-outlined text-sm text-blue-200">{l.icon}</span>
+                            <span className="text-sm text-blue-100 flex-1">{l.label}</span>
+                            {filterLevel.has(l.id) && <span className="w-2 h-2 rounded-full bg-emerald-400 box-shadow-glow"></span>}
+                        </label>
+                    ))}
+                </div>
+            </div>
+
         </div>
       </aside>
 

@@ -15,9 +15,7 @@ interface Workflow {
 
 const StudioView: React.FC<StudioViewProps> = () => {
     // State
-    const [library, setLibrary] = useState<Workflow[]>([
-        { id: 999, name: "HR Onboard", dept: "HR", color: "from-amber-900 via-amber-700 to-amber-900", height: 28 } // Example
-    ]);
+    const [library, setLibrary] = useState<Workflow[]>([]);
     const [dept, setDept] = useState("Sales");
     const [level, setLevel] = useState("hitl");
     const [trigger, setTrigger] = useState("");
@@ -25,6 +23,36 @@ const StudioView: React.FC<StudioViewProps> = () => {
     const [selectedTools, setSelectedTools] = useState<Set<string>>(new Set());
     const [generatedResult, setGeneratedResult] = useState<{title: string, desc: string} | null>(null);
     const [isThinking, setIsThinking] = useState(false);
+
+    // Initial Fetch
+    React.useEffect(() => {
+        const fetchLibrary = async () => {
+            const { data, error } = await import('../lib/supabase').then(m => m.supabase.from('workflows').select('*').order('created_at', { ascending: false }));
+            if (error) console.error('Error loading library:', error);
+            else {
+                // Map DB result to UI Workflow
+                setLibrary(data.map((row: any) => {
+                    // Try to parse metadata from description if it exists, else defaults
+                    let meta = { dept: 'General', color: 'from-slate-900 via-slate-700 to-slate-900', height: 28 };
+                    try {
+                        if (row.description && row.description.startsWith('{')) {
+                            const parsed = JSON.parse(row.description);
+                            if (parsed.meta) meta = parsed.meta;
+                        }
+                    } catch (e) {}
+                    
+                    return {
+                        id: row.id,
+                        name: row.name,
+                        dept: meta.dept,
+                        color: meta.color,
+                        height: meta.height
+                    };
+                }));
+            }
+        };
+        fetchLibrary();
+    }, []);
 
     // Helpers
     const toggleTool = (tool: string) => {
@@ -46,29 +74,54 @@ const StudioView: React.FC<StudioViewProps> = () => {
         }, 1500);
     };
 
-    const saveWorkflow = () => {
+    const saveWorkflow = async () => {
         if (!generatedResult) { alert("Run the workflow first."); return; }
         
-        const colors = ['from-blue-900 via-blue-700 to-blue-900', 'from-indigo-900 via-indigo-700 to-indigo-900', 'from-slate-900 via-slate-700 to-slate-900'];
+        const colors = ['from-blue-900 via-blue-700 to-blue-900', 'from-indigo-900 via-indigo-700 to-indigo-900', 'from-slate-900 via-slate-700 to-slate-900', 'from-emerald-900 via-emerald-700 to-emerald-900'];
         const randomColor = colors[Math.floor(Math.random() * colors.length)];
         const height = Math.floor(Math.random() * (32 - 24 + 1) + 24); 
+        
+        const workflowName = `Generated ${library.length + 1}`;
+        
+        // Save to Supabase
+        const { supabase } = await import('../lib/supabase');
+        const { user } = await supabase.auth.getUser().then(res => ({ user: res.data.user }));
+        
+        if (!user) { alert("You must be logged in to save."); return; }
 
-        const newFlow: Workflow = {
-            id: Date.now(),
-            name: `Generated ${library.length + 1}`,
-            dept,
-            color: randomColor,
-            height
+        // We store metadata in description as a simple JSON string workaround for MVP schema
+        const metaPayload = {
+            desc: generatedResult.desc,
+            meta: { dept, color: randomColor, height, tools: Array.from(selectedTools), level }
         };
-        
-        setLibrary([newFlow, ...library]);
-        alert("Saved to Library!");
-        
-        // Reset
-        setTrigger("");
-        setAction("");
-        setGeneratedResult(null);
-        setSelectedTools(new Set());
+
+        const { data, error } = await supabase.from('workflows').insert({
+            user_id: user.id,
+            name: workflowName,
+            description: JSON.stringify(metaPayload),
+            status: 'draft'
+        }).select().single();
+
+        if (error) {
+            alert("Error saving: " + error.message);
+        } else {
+            const newFlow: Workflow = {
+                id: data.id,
+                name: data.name,
+                dept: dept,
+                color: randomColor,
+                height
+            };
+            
+            setLibrary([newFlow, ...library]);
+            alert("Saved to Library!");
+            
+            // Reset
+            setTrigger("");
+            setAction("");
+            setGeneratedResult(null);
+            setSelectedTools(new Set());
+        }
     };
 
     return (

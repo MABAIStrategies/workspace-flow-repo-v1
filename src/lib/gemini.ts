@@ -25,36 +25,49 @@ export const generateWorkflow = async (prompt: string, dept: string, level: stri
     }
     `;
 
-    try {
-        // Fallback to gemini-pro (1.0) for maximum compatibility if 1.5-flash is hitting region/account limits
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: systemPrompt }] }]
-            })
-        });
+    const models = ['gemini-3.0-flash', 'gemini-1.5-flash', 'gemini-pro'];
+    
+    let lastError;
 
-        const data = await response.json();
-        
-        if (!response.ok) {
-            const apiError = data.error?.message || response.statusText;
-            throw new Error(`Gemini API Error: ${apiError}`);
+    for (const model of models) {
+        try {
+            console.log(`Attempting AI with model: ${model}`);
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: systemPrompt }] }]
+                })
+            });
+
+            const data = await response.json();
+            
+            if (!response.ok) {
+                // If it's a 404 (Not Found) or 400 (Bad Request), try next model
+                const apiError = data.error?.message || response.statusText;
+                console.warn(`Model ${model} failed: ${apiError}`);
+                lastError = apiError;
+                continue; // Try next model
+            }
+
+            const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            
+            if (!text) {
+                 // Success response but no text? weird, but try next
+                 continue;
+            }
+
+            // Clean markdown code blocks if present
+            const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
+            return JSON.parse(jsonStr);
+
+        } catch (error) {
+            console.error(`Gemini Attempt Error (${model}):`, error);
+            lastError = error;
+            // Continue to next model
         }
-
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        
-        if (!text) {
-             console.error("Gemini Unexpected Response:", data);
-             throw new Error("AI returned success but no text. Check safety settings.");
-        }
-
-        // Clean markdown code blocks if present
-        const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
-        return JSON.parse(jsonStr);
-
-    } catch (error) {
-        console.error("Gemini Error:", error);
-        throw error;
     }
+
+    // If we get here, all models failed
+    throw new Error(`AI Failed after trying multiple models. Last error: ${lastError}`);
 };

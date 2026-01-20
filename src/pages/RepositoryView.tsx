@@ -70,10 +70,9 @@ const RepositoryView: React.FC<RepositoryViewProps> = ({ onFlowSelect }) => {
         {/* Results Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 pb-20">
           {filtered.map(flow => {
-            let accentColor = "slate";
             let badgeText = "Background";
-            if (flow.category === "hitl") { accentColor = "amber"; badgeText = "Human Loop"; }
-            else if (flow.category === "triggered") { accentColor = "blue"; badgeText = "Triggered"; }
+            if (flow.category === "hitl") { badgeText = "Human Loop"; }
+            else if (flow.category === "triggered") { badgeText = "Triggered"; }
 
             // Tailwind doesn't support dynamic class interpolation easily without safelisting 
             // So we use standard classes for simplicity in this port, or inline styles/helper function

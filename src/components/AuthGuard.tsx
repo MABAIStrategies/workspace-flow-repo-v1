@@ -15,25 +15,22 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
             if (isDemo) {
                 setSession({ user: { id: 'demo-user', email: 'demo@example.com' } });
                 setLoading(false);
-                return;
+                return; // Stop here, do not subscribe to Supabase
             }
 
             // 2. Check Real Supabase Session
             const { data: { session } } = await supabase.auth.getSession();
             setSession(session);
             setLoading(false);
+
+            // Only listen for changes if NOT in demo mode
+            const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+                setSession(session);
+            });
+            return () => subscription.unsubscribe();
         };
-        
+
         checkSession();
-
-        // Listen for changes
-        const {
-            data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event, session) => {
-            setSession(session);
-        });
-
-        return () => subscription.unsubscribe();
     }, []);
 
     // Real Implementation
@@ -47,11 +44,11 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
             </div>
         );
     }
-    
+
     if (!session) {
         // Redirect to login if not authenticated
         setTimeout(() => navigate('/login'), 0);
-        return null; 
+        return null;
     }
 
     return <>{children}</>;

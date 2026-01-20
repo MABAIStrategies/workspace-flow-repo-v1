@@ -21,33 +21,20 @@ const StudioView: React.FC<StudioViewProps> = () => {
     const [trigger, setTrigger] = useState("");
     const [action, setAction] = useState("");
     const [selectedTools, setSelectedTools] = useState<Set<string>>(new Set());
-    const [generatedResult, setGeneratedResult] = useState<{title: string, desc: string} | null>(null);
+    // Updated Result State to hold full object
+    const [generatedResult, setGeneratedResult] = useState<{title: string, desc: string, steps: string[]} | null>(null);
     const [isThinking, setIsThinking] = useState(false);
+    const [isPublic, setIsPublic] = useState(false);
 
-    // Initial Fetch
+    // Initial Fetch (Library)
     React.useEffect(() => {
         const fetchLibrary = async () => {
-            const { data, error } = await import('../lib/supabase').then(m => m.supabase.from('workflows').select('*').order('created_at', { ascending: false }));
-            if (error) console.error('Error loading library:', error);
-            else {
-                // Map DB result to UI Workflow
+            const { data } = await import('../lib/supabase').then(m => m.supabase.from('workflows').select('*').order('created_at', { ascending: false }));
+            if (data) {
                 setLibrary(data.map((row: any) => {
-                    // Try to parse metadata from description if it exists, else defaults
-                    let meta = { dept: 'General', color: 'from-slate-900 via-slate-700 to-slate-900', height: 28 };
-                    try {
-                        if (row.description && row.description.startsWith('{')) {
-                            const parsed = JSON.parse(row.description);
-                            if (parsed.meta) meta = parsed.meta;
-                        }
-                    } catch (e) {}
-                    
-                    return {
-                        id: row.id,
-                        name: row.name,
-                        dept: meta.dept,
-                        color: meta.color,
-                        height: meta.height
-                    };
+                    let meta = { dept: 'General', color: 'from-slate-900', height: 28 };
+                    try { meta = JSON.parse(row.description).meta || meta; } catch (e) {}
+                    return { id: row.id, name: row.name, dept: meta.dept, color: meta.color, height: meta.height };
                 }));
             }
         };
@@ -62,16 +49,26 @@ const StudioView: React.FC<StudioViewProps> = () => {
         setSelectedTools(newSet);
     };
 
-    const runSimulation = () => {
+    const runSimulation = async () => {
         if (!trigger || !action) { alert("Please fill in trigger and action."); return; }
         setIsThinking(true);
-        setTimeout(() => {
-            setIsThinking(false);
+        
+        try {
+            const { generateWorkflow } = await import('../lib/gemini');
+            const result = await generateWorkflow(`${trigger} -> ${action}`, dept, level, Array.from(selectedTools));
+            
+            setGeneratedResult(result);
+        } catch (e) {
+            alert("AI Error: " + e);
+            // Fallback for demo if key fails
             setGeneratedResult({
-                title: "Workflow Generated",
-                desc: `Successfully configured ${level} workflow for ${dept}: When '${trigger}' occurs, then '${action}' using ${Array.from(selectedTools).join(', ')}.`
+                title: "Manual Workflow",
+                desc: `Configured ${level} workflow for ${dept}: ${trigger} -> ${action}.`,
+                steps: ["Trigger detected", "Action executed"]
             });
-        }, 1500);
+        } finally {
+            setIsThinking(false);
+        }
     };
 
     const saveWorkflow = async () => {
@@ -81,46 +78,34 @@ const StudioView: React.FC<StudioViewProps> = () => {
         const randomColor = colors[Math.floor(Math.random() * colors.length)];
         const height = Math.floor(Math.random() * (32 - 24 + 1) + 24); 
         
-        const workflowName = `Generated ${library.length + 1}`;
-        
-        // Save to Supabase
         const { supabase } = await import('../lib/supabase');
-        const { user } = await supabase.auth.getUser().then(res => ({ user: res.data.user }));
+        const { data: { user } } = await supabase.auth.getUser();
         
         if (!user) { alert("You must be logged in to save."); return; }
 
-        // We store metadata in description as a simple JSON string workaround for MVP schema
         const metaPayload = {
             desc: generatedResult.desc,
-            meta: { dept, color: randomColor, height, tools: Array.from(selectedTools), level }
+            meta: { dept, color: randomColor, height, tools: Array.from(selectedTools), level },
+            steps: generatedResult.steps
         };
 
         const { data, error } = await supabase.from('workflows').insert({
             user_id: user.id,
-            name: workflowName,
+            name: generatedResult.title || "New Workflow",
             description: JSON.stringify(metaPayload),
+            department: dept, // Actual schema column
+            category: level,  // Actual schema column
+            tools: Array.from(selectedTools), // Actual schema column
+            is_public: isPublic,
             status: 'draft'
         }).select().single();
 
         if (error) {
             alert("Error saving: " + error.message);
         } else {
-            const newFlow: Workflow = {
-                id: data.id,
-                name: data.name,
-                dept: dept,
-                color: randomColor,
-                height
-            };
-            
-            setLibrary([newFlow, ...library]);
-            alert("Saved to Library!");
-            
-            // Reset
-            setTrigger("");
-            setAction("");
-            setGeneratedResult(null);
-            setSelectedTools(new Set());
+            setLibrary([{ id: data.id, name: data.name, dept, color: randomColor, height }, ...library]);
+            alert(isPublic ? "Saved & Published to Marketplace!" : "Saved to Private Library!");
+            setTrigger(""); setAction(""); setGeneratedResult(null); setSelectedTools(new Set()); setIsPublic(false);
         }
     };
 
@@ -176,7 +161,11 @@ const StudioView: React.FC<StudioViewProps> = () => {
                             <h2 className="text-2xl font-bold font-display text-slate-900">Workflow Studio</h2>
                             <p className="text-slate-500 text-sm">Design, test, and deploy new automation agents.</p>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 items-center">
+                            <label className="flex items-center gap-2 mr-2 cursor-pointer">
+                                <span className="text-xs font-bold text-slate-500 uppercase">Publish?</span>
+                                <input type="checkbox" checked={isPublic} onChange={e => setIsPublic(e.target.checked)} className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                            </label>
                             <button className="px-4 py-2 bg-white border border-slate-300 text-xs font-bold text-slate-600 rounded-lg hover:bg-slate-50">Clear</button>
                             <button onClick={saveWorkflow} className="px-4 py-2 bg-slate-900 text-white text-xs font-bold rounded-lg shadow-lg hover:bg-slate-800 flex items-center gap-2">
                                 <span className="material-symbols-outlined text-sm">save</span> Save

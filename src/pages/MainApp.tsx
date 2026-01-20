@@ -40,12 +40,32 @@ const MainApp: React.FC = () => {
                         </div>
 
                         {/* Right Area: Profile Placeholder */}
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-4 relative">
                             <span className="text-slate-400 hover:text-slate-600 cursor-pointer">
                                 <span className="material-symbols-outlined">notifications</span>
                             </span>
-                            <div className="h-8 w-8 rounded-full bg-slate-200 border-2 border-white shadow-sm overflow-hidden">
-                                <img src={`https://ui-avatars.com/api/?name=Mark+User&background=0D8ABC&color=fff`} alt="Profile" />
+                            <div className="relative group">
+                                <button className="h-8 w-8 rounded-full bg-slate-200 border-2 border-white shadow-sm overflow-hidden focus:ring-2 focus:ring-blue-500 transition-all outline-none">
+                                    <img src={`https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff`} alt="Profile" />
+                                </button>
+                                
+                                {/* Dropdown Menu */}
+                                <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 py-1 opacity-0 invisible group-focus-within:opacity-100 group-focus-within:visible transition-all duration-200 transform origin-top-right z-50">
+                                    <div className="px-4 py-3 border-b border-slate-50">
+                                        <p className="text-xs text-slate-500">Signed in as</p>
+                                        <p className="text-sm font-bold text-slate-900 truncate">User</p>
+                                    </div>
+                                    <button 
+                                        onClick={async () => {
+                                            await import('../lib/supabase').then(m => m.supabase.auth.signOut());
+                                            window.location.href = '/login';
+                                        }} 
+                                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
+                                    >
+                                        <span className="material-symbols-outlined text-sm">logout</span>
+                                        Sign Out
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>

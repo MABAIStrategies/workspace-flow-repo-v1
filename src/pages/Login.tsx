@@ -12,7 +12,13 @@ const Login: React.FC = () => {
         setLoading(true);
         // For MVP, we use Magic Link or basic Email/Pass. 
         // Using Magic Link here for "Passwordless" security.
-        const { error } = await supabase.auth.signInWithOtp({ email });
+        // explicit redirect is critical for Cloudflare
+        const { error } = await supabase.auth.signInWithOtp({ 
+            email,
+            options: {
+                emailRedirectTo: `${window.location.origin}/app` 
+            }
+        });
         
         if (error) {
             alert(error.message);

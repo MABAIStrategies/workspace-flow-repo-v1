@@ -35,9 +35,18 @@ export const generateWorkflow = async (prompt: string, dept: string, level: stri
         });
 
         const data = await response.json();
+        
+        if (!response.ok) {
+            const apiError = data.error?.message || response.statusText;
+            throw new Error(`Gemini API Error: ${apiError}`);
+        }
+
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
         
-        if (!text) throw new Error("No response from AI");
+        if (!text) {
+             console.error("Gemini Unexpected Response:", data);
+             throw new Error("AI returned success but no text. Check safety settings.");
+        }
 
         // Clean markdown code blocks if present
         const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();

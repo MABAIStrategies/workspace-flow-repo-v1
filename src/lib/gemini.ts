@@ -1,4 +1,3 @@
-
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
 export const generateWorkflow = async (prompt: string, dept: string, level: string, tools: string[]) => {
@@ -25,7 +24,8 @@ export const generateWorkflow = async (prompt: string, dept: string, level: stri
     }
     `;
 
-    const models = ['gemini-3.0-flash', 'gemini-1.5-flash', 'gemini-pro'];
+    // FIXED: Updated to use correct model names
+    const models = ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash'];
     
     let lastError;
 

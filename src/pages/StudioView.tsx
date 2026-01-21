@@ -274,7 +274,7 @@ const StudioView: React.FC<StudioViewProps> = () => {
                                                 <div className="bg-slate-800 rounded-lg p-4 text-white">
                                                     <div className="flex items-center justify-between mb-2">
                                                         <p className="text-xs font-bold text-slate-400 uppercase">Implementation Prompt</p>
-                                                        <button onClick={() => { navigator.clipboard.writeText(generatedResult.implementationPrompt); alert('Copied!'); }} className="text-xs bg-slate-700 hover:bg-slate-600 px-2 py-1 rounded flex items-center gap-1">
+                                                        <button onClick={() => { navigator.clipboard.writeText(generatedResult.implementationPrompt || ''); alert('Copied!'); }} className="text-xs bg-slate-700 hover:bg-slate-600 px-2 py-1 rounded flex items-center gap-1">
                                                             <span className="material-symbols-outlined text-sm">content_copy</span> Copy
                                                         </button>
                                                     </div>

@@ -6,7 +6,8 @@ export const generateWorkflow = async (prompt: string, dept: string, level: stri
     }
 
     const systemPrompt = `
-    You are an expert Automation Architect. Your goal is to design a specific, actionable workflow for a user.
+    You are an expert Automation Architect specializing in Google Workspace Studio Flows.
+    Your goal is to design a specific, actionable workflow the user can immediately implement.
     
     Context:
     - Department: ${dept}
@@ -16,11 +17,13 @@ export const generateWorkflow = async (prompt: string, dept: string, level: stri
     User Request: "${prompt}"
 
     Output Format:
-    Return a JSON object ONLY, with this structure:
+    Return a JSON object ONLY (no markdown, no explanation), with this exact structure:
     {
-        "title": "A short, catchy name for this flow",
-        "desc": "A 2-sentence summary of what it does and the value it provides.",
-        "steps": ["Step 1", "Step 2", "Step 3", "Step 4"]
+        "title": "A short, catchy name for this flow (e.g., 'Daily Lead Qualifier')",
+        "desc": "A 2-3 sentence summary explaining what the workflow does and the business value.",
+        "platform": "Google Workspace Studio",
+        "steps": ["Step 1 with specific action", "Step 2 with specific action", "Step 3...", "Step 4..."],
+        "implementationPrompt": "A detailed, copy-paste-ready prompt the user can paste into Google Workspace Studio Flows to create this exact automation. Be specific about triggers, conditions, and actions."
     }
     `;
 

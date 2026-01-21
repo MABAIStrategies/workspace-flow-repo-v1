@@ -249,11 +249,16 @@ const StudioView: React.FC<StudioViewProps> = () => {
                                             <span className="text-slate-500 font-mono text-sm animate-pulse">Running Logic Simulation...</span>
                                         </div>
                                     ) : generatedResult ? (
-                                        <div className="w-full animate-fade-in">
+                                        <div className="w-full animate-fade-in overflow-y-auto max-h-[400px] custom-scrollbar">
                                             <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-4 mb-4">
-                                                <div className="flex items-center gap-2 text-emerald-700 mb-2 font-bold">
-                                                    <span className="material-symbols-outlined">check_circle</span>
-                                                    {generatedResult.title || 'Workflow Ready'}
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <div className="flex items-center gap-2 text-emerald-700 font-bold">
+                                                        <span className="material-symbols-outlined">check_circle</span>
+                                                        {generatedResult.title || 'Workflow Ready'}
+                                                    </div>
+                                                    {generatedResult.platform && (
+                                                        <span className="text-[10px] font-bold bg-blue-100 text-blue-700 px-2 py-1 rounded-full uppercase">{generatedResult.platform}</span>
+                                                    )}
                                                 </div>
                                                 <p className="text-emerald-800 text-sm mb-3">{generatedResult.desc}</p>
                                                 {generatedResult.steps && generatedResult.steps.length > 0 && (
@@ -265,6 +270,17 @@ const StudioView: React.FC<StudioViewProps> = () => {
                                                     </div>
                                                 )}
                                             </div>
+                                            {generatedResult.implementationPrompt && (
+                                                <div className="bg-slate-800 rounded-lg p-4 text-white">
+                                                    <div className="flex items-center justify-between mb-2">
+                                                        <p className="text-xs font-bold text-slate-400 uppercase">Implementation Prompt</p>
+                                                        <button onClick={() => { navigator.clipboard.writeText(generatedResult.implementationPrompt); alert('Copied!'); }} className="text-xs bg-slate-700 hover:bg-slate-600 px-2 py-1 rounded flex items-center gap-1">
+                                                            <span className="material-symbols-outlined text-sm">content_copy</span> Copy
+                                                        </button>
+                                                    </div>
+                                                    <p className="text-sm font-mono text-slate-200 whitespace-pre-wrap">{generatedResult.implementationPrompt}</p>
+                                                </div>
+                                            )}
                                         </div>
                                     ) : (
                                         <div className="text-center opacity-40">

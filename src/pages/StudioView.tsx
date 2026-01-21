@@ -22,7 +22,7 @@ const StudioView: React.FC<StudioViewProps> = () => {
     const [action, setAction] = useState("");
     const [selectedTools, setSelectedTools] = useState<Set<string>>(new Set());
     // Updated Result State to hold full object
-    const [generatedResult, setGeneratedResult] = useState<{ title: string, desc: string, steps: string[] } | null>(null);
+    const [generatedResult, setGeneratedResult] = useState<{ title: string, desc: string, steps: string[], platform?: string, implementationPrompt?: string } | null>(null);
     const [isThinking, setIsThinking] = useState(false);
     const [isPublic, setIsPublic] = useState(false);
 

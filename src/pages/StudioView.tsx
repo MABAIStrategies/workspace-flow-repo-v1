@@ -22,7 +22,7 @@ const StudioView: React.FC<StudioViewProps> = () => {
     const [action, setAction] = useState("");
     const [selectedTools, setSelectedTools] = useState<Set<string>>(new Set());
     // Updated Result State to hold full object
-    const [generatedResult, setGeneratedResult] = useState<{title: string, desc: string, steps: string[]} | null>(null);
+    const [generatedResult, setGeneratedResult] = useState<{ title: string, desc: string, steps: string[] } | null>(null);
     const [isThinking, setIsThinking] = useState(false);
     const [isPublic, setIsPublic] = useState(false);
 
@@ -33,7 +33,7 @@ const StudioView: React.FC<StudioViewProps> = () => {
             if (data) {
                 setLibrary(data.map((row: any) => {
                     let meta = { dept: 'General', color: 'from-slate-900', height: 28 };
-                    try { meta = JSON.parse(row.description).meta || meta; } catch (e) {}
+                    try { meta = JSON.parse(row.description).meta || meta; } catch (e) { }
                     return { id: row.id, name: row.name, dept: meta.dept, color: meta.color, height: meta.height };
                 }));
             }
@@ -52,11 +52,11 @@ const StudioView: React.FC<StudioViewProps> = () => {
     const runSimulation = async () => {
         if (!trigger || !action) { alert("Please fill in trigger and action."); return; }
         setIsThinking(true);
-        
+
         try {
             const { generateWorkflow } = await import('../lib/gemini');
             const result = await generateWorkflow(`${trigger} -> ${action}`, dept, level, Array.from(selectedTools));
-            
+
             setGeneratedResult(result);
         } catch (e) {
             alert("AI Error: " + e);
@@ -73,14 +73,14 @@ const StudioView: React.FC<StudioViewProps> = () => {
 
     const saveWorkflow = async () => {
         if (!generatedResult) { alert("Run the workflow first."); return; }
-        
+
         const colors = ['from-blue-900 via-blue-700 to-blue-900', 'from-indigo-900 via-indigo-700 to-indigo-900', 'from-slate-900 via-slate-700 to-slate-900', 'from-emerald-900 via-emerald-700 to-emerald-900'];
         const randomColor = colors[Math.floor(Math.random() * colors.length)];
-        const height = Math.floor(Math.random() * (32 - 24 + 1) + 24); 
-        
+        const height = Math.floor(Math.random() * (32 - 24 + 1) + 24);
+
         const { supabase } = await import('../lib/supabase');
         const { data: { user } } = await supabase.auth.getUser();
-        
+
         if (!user) { alert("You must be logged in to save."); return; }
 
         const metaPayload = {
@@ -93,11 +93,10 @@ const StudioView: React.FC<StudioViewProps> = () => {
             user_id: user.id,
             name: generatedResult.title || "New Workflow",
             description: JSON.stringify(metaPayload),
-            department: dept, // Actual schema column
-            category: level,  // Actual schema column
-            tools: Array.from(selectedTools), // Actual schema column
-            is_public: isPublic,
-            status: 'draft'
+            department: dept,
+            category: level,
+            tools: Array.from(selectedTools),
+            is_public: isPublic
         }).select().single();
 
         if (error) {
@@ -127,7 +126,7 @@ const StudioView: React.FC<StudioViewProps> = () => {
                             My Library
                         </h2>
                     </div>
-                    
+
                     <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-1">
                         {/* Shelf Rows (Visual) */}
                         <div className="absolute inset-0 flex flex-col justify-evenly px-4 py-8 pointer-events-none opacity-20">
@@ -137,7 +136,7 @@ const StudioView: React.FC<StudioViewProps> = () => {
                         {/* Books */}
                         <div className="space-y-8 px-2 pt-4 relative z-10 flex flex-row flex-wrap items-end gap-1">
                             {library.map(book => (
-                                <div 
+                                <div
                                     key={book.id}
                                     className={`group relative min-w-[32px] w-8 bg-gradient-to-r ${book.color} rounded-sm shadow-xl hover:-translate-y-4 transition-transform duration-300 cursor-pointer flex flex-col items-center justify-center py-2 border-l border-white/10 overflow-hidden`}
                                     style={{ height: `${book.height * 4}px` }} // Scaling roughly to tailwind units
@@ -176,8 +175,8 @@ const StudioView: React.FC<StudioViewProps> = () => {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         {/* Configuration Column */}
                         <div className="space-y-6">
-                             {/* System Config */}
-                             <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                            {/* System Config */}
+                            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                                 <h3 className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2 flex items-center gap-2">
                                     <span className="material-symbols-outlined text-sm">tune</span> System Configuration
                                 </h3>
@@ -185,9 +184,9 @@ const StudioView: React.FC<StudioViewProps> = () => {
                                     <div>
                                         <label className="text-xs text-slate-500 mb-1 block">Department</label>
                                         <select value={dept} onChange={e => setDept(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all w-full">
-                                            {Object.values(AppTools).slice(0, 6).map(d => <option key={d}>{d}</option>)} 
+                                            {Object.values(AppTools).slice(0, 6).map(d => <option key={d}>{d}</option>)}
                                             {/* Oops, used Tools instead of Depts. Fix below */}
-                                             <option>Sales</option><option>Marketing</option><option>HR</option><option>Finance</option><option>Operations</option>
+                                            <option>Sales</option><option>Marketing</option><option>HR</option><option>Finance</option><option>Operations</option>
                                         </select>
                                     </div>
                                     <div>
@@ -203,7 +202,7 @@ const StudioView: React.FC<StudioViewProps> = () => {
                                     <label className="text-xs text-slate-500 mb-1 block">Integrated Tools</label>
                                     <div className="flex flex-wrap gap-2">
                                         {Object.values(AppTools).map(tool => (
-                                            <button 
+                                            <button
                                                 key={tool}
                                                 onClick={() => toggleTool(tool)}
                                                 className={`px-2 py-1 rounded text-xs font-bold border transition-all ${selectedTools.has(tool) ? 'bg-blue-100 border-blue-200 text-blue-700' : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-blue-300'}`}
@@ -233,8 +232,8 @@ const StudioView: React.FC<StudioViewProps> = () => {
                             </div>
                         </div>
 
-                         {/* Results Column */}
-                         <div className="space-y-6">
+                        {/* Results Column */}
+                        <div className="space-y-6">
                             <div className="bg-white rounded-xl shadow-lg border border-slate-200 h-full min-h-[500px] flex flex-col relative overflow-hidden">
                                 <div className="bg-slate-50 border-b border-slate-200 p-4 flex justify-between items-center">
                                     <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Simulation Output</span>
@@ -251,18 +250,26 @@ const StudioView: React.FC<StudioViewProps> = () => {
                                         </div>
                                     ) : generatedResult ? (
                                         <div className="w-full animate-fade-in">
-                                             <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-4 mb-4">
+                                            <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-4 mb-4">
                                                 <div className="flex items-center gap-2 text-emerald-700 mb-2 font-bold">
                                                     <span className="material-symbols-outlined">check_circle</span>
-                                                    Valid Logic Configuration
+                                                    {generatedResult.title || 'Workflow Ready'}
                                                 </div>
-                                                <p className="text-emerald-800 text-sm">{generatedResult.desc}</p>
-                                             </div>
+                                                <p className="text-emerald-800 text-sm mb-3">{generatedResult.desc}</p>
+                                                {generatedResult.steps && generatedResult.steps.length > 0 && (
+                                                    <div className="border-t border-emerald-200 pt-3 mt-2">
+                                                        <p className="text-xs font-bold text-emerald-700 uppercase mb-2">Steps:</p>
+                                                        <ol className="list-decimal list-inside space-y-1 text-sm text-emerald-800">
+                                                            {generatedResult.steps.map((step: string, i: number) => <li key={i}>{step}</li>)}
+                                                        </ol>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     ) : (
                                         <div className="text-center opacity-40">
                                             <span className="material-symbols-outlined text-6xl text-slate-300 mb-4">play_arrow</span>
-                                            <p className="text-slate-400 font-medium">Configure your logic and<br/>click 'Run Simulation'</p>
+                                            <p className="text-slate-400 font-medium">Configure your logic and<br />click 'Run Simulation'</p>
                                         </div>
                                     )}
                                 </div>

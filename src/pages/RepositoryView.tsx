@@ -9,6 +9,7 @@ const RepositoryView: React.FC<RepositoryViewProps> = ({ onFlowSelect }) => {
     const [filterSearch, setFilterSearch] = useState("");
     const [filterDept, setFilterDept] = useState<Set<string>>(new Set());
     const [filterLevel, setFilterLevel] = useState<Set<string>>(new Set());
+    const [filterPlatform, setFilterPlatform] = useState<Set<string>>(new Set());
     const [userFlows, setUserFlows] = useState<any[]>([]);
 
     // Load User Flows from DB
@@ -40,6 +41,7 @@ const RepositoryView: React.FC<RepositoryViewProps> = ({ onFlowSelect }) => {
                         category: meta.level,
                         dept: meta.dept,
                         tools: meta.tools,
+                        platform: row.platform || 'Google Workspace Studio',
                         timeSaved: 'Draft',
                         action: 'Custom Workflow',
                         isUser: true // Flag for UI
@@ -68,13 +70,21 @@ const RepositoryView: React.FC<RepositoryViewProps> = ({ onFlowSelect }) => {
         setFilterLevel(newSet);
     };
 
+    const togglePlatform = (p: string) => {
+        const newSet = new Set(filterPlatform);
+        if (newSet.has(p)) newSet.delete(p);
+        else newSet.add(p);
+        setFilterPlatform(newSet);
+    };
+
     const filtered = allFlows.filter(flow => {
         const matchesSearch = flow.name.toLowerCase().includes(filterSearch.toLowerCase()) ||
             flow.action.toLowerCase().includes(filterSearch.toLowerCase());
         const matchesDept = filterDept.size === 0 || filterDept.has(flow.dept);
         const matchesLevel = filterLevel.size === 0 || filterLevel.has(flow.category);
+        const matchesPlatform = filterPlatform.size === 0 || filterPlatform.has(flow.platform || "Google Workspace Studio");
 
-        return matchesSearch && matchesDept && matchesLevel;
+        return matchesSearch && matchesDept && matchesLevel && matchesPlatform;
     }).sort((a, b) => {
         // User flows first, then rank
         if (a.isUser && !b.isUser) return -1;
@@ -137,6 +147,23 @@ const RepositoryView: React.FC<RepositoryViewProps> = ({ onFlowSelect }) => {
                                     <span className="material-symbols-outlined text-sm text-blue-200">{l.icon}</span>
                                     <span className="text-sm text-blue-100 flex-1">{l.label}</span>
                                     {filterLevel.has(l.id) && <span className="w-2 h-2 rounded-full bg-emerald-400 box-shadow-glow"></span>}
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Platform Filter */}
+                    <div>
+                        <label className="text-xs font-bold text-blue-200 uppercase tracking-wider mb-3 block flex justify-between">
+                            Platform
+                            {filterPlatform.size > 0 && <span onClick={() => setFilterPlatform(new Set())} className="text-[10px] underline cursor-pointer hover:text-white">Clear</span>}
+                        </label>
+                        <div className="space-y-1">
+                            {["Google Workspace Studio", "OpenAI GPT", "GEM (Custom Agent)", "Zapier / IFTTT", "Mac / iOS Shortcut", "Power Automate / AppSheet", "Opal / Toolhouse"].map(p => (
+                                <label key={p} onClick={() => togglePlatform(p)} className="flex items-center gap-3 cursor-pointer group hover:bg-white/5 p-2 rounded-lg transition-colors">
+                                    <div className={`w-3 h-3 rounded-full border flex items-center justify-center transition-all ${filterPlatform.has(p) ? 'bg-emerald-400 border-emerald-400' : 'border-blue-300/50 group-hover:border-white/80'}`}>
+                                    </div>
+                                    <span className={`text-[11px] ${filterPlatform.has(p) ? 'text-white font-bold' : 'text-blue-100 group-hover:text-white'}`}>{p}</span>
                                 </label>
                             ))}
                         </div>

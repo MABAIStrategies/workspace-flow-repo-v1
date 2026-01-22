@@ -21,6 +21,7 @@ const StudioView: React.FC<StudioViewProps> = () => {
     const [trigger, setTrigger] = useState("");
     const [action, setAction] = useState("");
     const [selectedTools, setSelectedTools] = useState<Set<string>>(new Set());
+    const [platform, setPlatform] = useState("Google Workspace Studio");
     // Updated Result State to hold full object
     const [generatedResult, setGeneratedResult] = useState<{ title: string, desc: string, steps: string[], platform?: string, implementationPrompt?: string } | null>(null);
     const [isThinking, setIsThinking] = useState(false);
@@ -55,7 +56,7 @@ const StudioView: React.FC<StudioViewProps> = () => {
 
         try {
             const { generateWorkflow } = await import('../lib/gemini');
-            const result = await generateWorkflow(`${trigger} -> ${action}`, dept, level, Array.from(selectedTools));
+            const result = await generateWorkflow(`${trigger} -> ${action}`, dept, level, Array.from(selectedTools), platform);
 
             setGeneratedResult(result);
         } catch (e) {
@@ -96,7 +97,8 @@ const StudioView: React.FC<StudioViewProps> = () => {
             department: dept,
             category: level,
             tools: Array.from(selectedTools),
-            is_public: isPublic
+            is_public: isPublic,
+            platform: platform
         }).select().single();
 
         if (error) {
@@ -197,6 +199,18 @@ const StudioView: React.FC<StudioViewProps> = () => {
                                             <option value="background">Background</option>
                                         </select>
                                     </div>
+                                </div>
+                                <div className="mt-4">
+                                    <label className="text-xs text-slate-500 mb-1 block">Target Platform</label>
+                                    <select value={platform} onChange={e => setPlatform(e.target.value)} className="bg-slate-900 text-white border-0 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all w-full font-bold">
+                                        <option>Google Workspace Studio</option>
+                                        <option>OpenAI GPT</option>
+                                        <option>GEM (Custom Agent)</option>
+                                        <option>Zapier / IFTTT</option>
+                                        <option>Mac / iOS Shortcut</option>
+                                        <option>Power Automate / AppSheet</option>
+                                        <option>Opal / Toolhouse</option>
+                                    </select>
                                 </div>
                                 <div>
                                     <label className="text-xs text-slate-500 mb-1 block">Integrated Tools</label>

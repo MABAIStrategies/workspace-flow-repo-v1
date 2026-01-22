@@ -1,29 +1,30 @@
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
-export const generateWorkflow = async (prompt: string, dept: string, level: string, tools: string[]) => {
+export const generateWorkflow = async (prompt: string, dept: string, level: string, tools: string[], platform: string) => {
     if (!GEMINI_API_KEY) {
         throw new Error("Missing Gemini API Key");
     }
 
     const systemPrompt = `
-    You are an expert Automation Architect specializing in Google Workspace Studio Flows.
-    Your goal is to design a specific, actionable workflow the user can immediately implement.
+    You are an expert Automation Architect specializing in ${platform}.
+    Your goal is to design a specific, actionable workflow for the ${platform} ecosystem that the user can immediately implement.
     
     Context:
     - Department: ${dept}
     - Automation Level: ${level} (HITL=Human in Loop, Triggered=Event Driven, Background=Fully Auto)
     - Available Tools: ${tools.join(', ')}
+    - Target Platform: ${platform}
     
     User Request: "${prompt}"
 
     Output Format:
     Return a JSON object ONLY (no markdown, no explanation), with this exact structure:
     {
-        "title": "A short, catchy name for this flow (e.g., 'Daily Lead Qualifier')",
+        "title": "A short, catchy name for this flow",
         "desc": "A 2-3 sentence summary explaining what the workflow does and the business value.",
-        "platform": "Google Workspace Studio",
+        "platform": "${platform}",
         "steps": ["Step 1 with specific action", "Step 2 with specific action", "Step 3...", "Step 4..."],
-        "implementationPrompt": "A detailed, copy-paste-ready prompt the user can paste into Google Workspace Studio Flows to create this exact automation. Be specific about triggers, conditions, and actions."
+        "implementationPrompt": "A detailed, copy-paste-ready instruction or prompt the user can use within ${platform} to create this exact automation. Be highly specific to the ${platform} interface."
     }
     `;
 

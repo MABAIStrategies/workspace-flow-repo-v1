@@ -3,60 +3,22 @@ import RepositoryView from './RepositoryView';
 import StudioView from './StudioView';
 import { supabase } from '../lib/supabase';
 
-const ProfileForm: React.FC = () => {
-    const [name, setName] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [msg, setMsg] = useState('');
-
-    React.useEffect(() => {
-        getProfile();
-    }, []);
-
-    const getProfile = async () => {
-        try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                let { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-                if (data) {
-                    setName(data.full_name || '');
-                }
-            }
-        } catch (error) {}
-    };
-
-    const updateProfile = async () => {
-        setLoading(true);
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-
-        const updates = {
-            id: user.id,
-            full_name: name,
-            updated_at: new Date(),
-        };
-
-        const { error } = await supabase.from('profiles').upsert(updates);
-        if (error) setMsg('Error');
-        else setMsg('Saved!');
-        setLoading(false);
-        setTimeout(() => setMsg(''), 3000);
-    };
-
+const ProfileForm: React.FC<{ name: string, setName: (n: string) => void, onSave: () => void, loading: boolean, msg: string }> = ({ name, setName, onSave, loading, msg }) => {
     return (
         <div className="space-y-6 max-w-md">
             <div>
                 <label className="block text-sm font-medium leading-6 text-slate-900">Display Name</label>
                 <div className="mt-2">
-                    <input 
+                    <input
                         value={name} onChange={e => setName(e.target.value)}
-                        type="text" className="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6 px-3" placeholder="Enter your name" 
+                        type="text" className="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6 px-3" placeholder="Enter your name"
                     />
                 </div>
             </div>
-            
+
             <div className="pt-4 flex items-center gap-4">
-                <button 
-                    onClick={updateProfile}
+                <button
+                    onClick={onSave}
                     disabled={loading}
                     className="rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50"
                 >
@@ -72,17 +34,55 @@ const MainApp: React.FC = () => {
     const [view, setView] = useState<'repo' | 'studio' | 'profile'>('repo');
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [selectedFlow, setSelectedFlow] = useState<any>(null);
+    const [userName, setUserName] = useState('User');
+    const [loading, setLoading] = useState(false);
+    const [msg, setMsg] = useState('');
+
+    React.useEffect(() => {
+        fetchProfile();
+    }, []);
+
+    const fetchProfile = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+            const { data } = await supabase.from('profiles').select('full_name').eq('id', user.id).single();
+            if (data?.full_name) setUserName(data.full_name);
+        }
+    };
+
+    const handleSaveProfile = async () => {
+        setLoading(true);
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error("No user");
+
+            const { error } = await supabase.from('profiles').upsert({
+                id: user.id,
+                full_name: userName,
+                updated_at: new Date().toISOString()
+            });
+
+            if (error) throw error;
+            setMsg('Saved!');
+        } catch (e) {
+            console.error(e);
+            setMsg('Error');
+        } finally {
+            setLoading(false);
+            setTimeout(() => setMsg(''), 3000);
+        }
+    };
 
     return (
         <div className="flex flex-col h-screen overflow-hidden bg-slate-50 font-sans text-slate-900">
-             {/* Main App Header */}
+            {/* Main App Header */}
             <header className="bg-brand-50/50 backdrop-blur-md border-b border-slate-200 z-30 shrink-0 sticky top-0">
                 <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between h-16 items-center">
                         {/* Logo Area */}
                         <div className="flex items-center gap-4 cursor-pointer" onClick={() => setView('repo')}>
                             {/* Mobile Hamburger */}
-                             <button onClick={(e) => { e.stopPropagation(); setMobileMenuOpen(!mobileMenuOpen); }} className="md:hidden p-2 text-slate-500 hover:text-slate-900">
+                            <button onClick={(e) => { e.stopPropagation(); setMobileMenuOpen(!mobileMenuOpen); }} className="md:hidden p-2 text-slate-500 hover:text-slate-900">
                                 <span className="material-symbols-outlined">menu</span>
                             </button>
                             <img src="/Images/OfficialCompanyLogo.png" alt="MAB Logo" className="h-10 w-auto object-contain mix-blend-multiply" />
@@ -95,13 +95,13 @@ const MainApp: React.FC = () => {
                         {/* Centered Navigation Toggles - HIDDEN ON MOBILE */}
                         <div className="absolute left-1/2 transform -translate-x-1/2 hidden md:block">
                             <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200 shadow-inner">
-                                <button 
+                                <button
                                     onClick={() => setView('repo')}
                                     className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${view === 'repo' ? 'bg-gradient-to-r from-slate-900 to-slate-800 text-white shadow-md ring-1 ring-white/10' : 'text-slate-500 hover:text-slate-900'}`}
                                 >
                                     Repository
                                 </button>
-                                <button 
+                                <button
                                     onClick={() => setView('studio')}
                                     className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all flex items-center gap-2 ${view === 'studio' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md ring-1 ring-white/10' : 'text-slate-500 hover:text-slate-900'}`}
                                 >
@@ -117,27 +117,27 @@ const MainApp: React.FC = () => {
                             </span>
                             <div className="relative group">
                                 <button className="h-8 w-8 rounded-full bg-slate-200 border-2 border-white shadow-sm overflow-hidden focus:ring-2 focus:ring-blue-500 transition-all outline-none">
-                                    <img src={`https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff`} alt="Profile" />
+                                    <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=0D8ABC&color=fff`} alt="Profile" />
                                 </button>
-                                
+
                                 {/* Dropdown Menu */}
                                 <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 py-1 opacity-0 invisible group-focus-within:opacity-100 group-focus-within:visible transition-all duration-200 transform origin-top-right z-50">
                                     <div className="px-4 py-3 border-b border-slate-50">
                                         <p className="text-xs text-slate-500">Signed in as</p>
-                                        <p className="text-sm font-bold text-slate-900 truncate">User</p>
+                                        <p className="text-sm font-bold text-slate-900 truncate">{userName}</p>
                                     </div>
-                                    <button 
-                                        onClick={() => setView('profile')} 
+                                    <button
+                                        onClick={() => setView('profile')}
                                         className="w-full text-left px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 transition-colors flex items-center gap-2"
                                     >
                                         <span className="material-symbols-outlined text-sm">person</span>
                                         Profile Settings
                                     </button>
-                                    <button 
+                                    <button
                                         onClick={async () => {
                                             await import('../lib/supabase').then(m => m.supabase.auth.signOut());
                                             window.location.href = '/login';
-                                        }} 
+                                        }}
                                         className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
                                     >
                                         <span className="material-symbols-outlined text-sm">logout</span>
@@ -166,11 +166,17 @@ const MainApp: React.FC = () => {
                 <div className="flex-1 overflow-y-auto bg-slate-50 p-4 sm:p-8 flex justify-center">
                     <div className="max-w-2xl w-full bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
                         <h2 className="text-2xl font-bold font-display text-slate-900 mb-6">User Profile</h2>
-                        <ProfileForm />
+                        <ProfileForm
+                            name={userName}
+                            setName={setUserName}
+                            onSave={handleSaveProfile}
+                            loading={loading}
+                            msg={msg}
+                        />
                     </div>
                 </div>
             )}
-            
+
             {/* Detail Modal (Simplified implementation for MVP) */}
             {selectedFlow && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6" onClick={() => setSelectedFlow(null)}>
@@ -190,7 +196,7 @@ const MainApp: React.FC = () => {
                                 <span className="material-symbols-outlined">close</span>
                             </button>
                         </div>
-                        
+
                         {/* Modal Content */}
                         <div className="p-6 overflow-y-auto custom-scrollbar">
                             <h4 className="text-sm font-bold text-slate-900 uppercase tracking-wide mb-4">Implementation Steps</h4>
@@ -198,7 +204,7 @@ const MainApp: React.FC = () => {
                                 <div className="absolute left-4 top-4 bottom-4 w-0.5 bg-slate-100"></div>
                                 {selectedFlow.steps && selectedFlow.steps.map((step: string, i: number) => (
                                     <div key={i} className="flex gap-5 relative">
-                                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-white text-blue-600 font-bold flex items-center justify-center border-2 border-blue-100 shadow-sm z-10">{i+1}</div>
+                                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-white text-blue-600 font-bold flex items-center justify-center border-2 border-blue-100 shadow-sm z-10">{i + 1}</div>
                                         <div className="pt-1">
                                             <p className="text-sm text-slate-600 mt-1">{step}</p>
                                         </div>
@@ -207,7 +213,7 @@ const MainApp: React.FC = () => {
                             </div>
                         </div>
 
-                         <div className="bg-slate-50 p-6 border-t border-slate-200 flex justify-end gap-3 sticky bottom-0">
+                        <div className="bg-slate-50 p-6 border-t border-slate-200 flex justify-end gap-3 sticky bottom-0">
                             <button onClick={() => setSelectedFlow(null)} className="px-6 py-2.5 rounded-lg bg-white border border-slate-300 text-sm font-bold text-slate-700 hover:bg-slate-50">Close</button>
                             <button className="px-6 py-2.5 rounded-lg bg-slate-900 text-white text-sm font-bold shadow-lg hover:bg-black flex items-center gap-2">
                                 <span className="material-symbols-outlined text-sm">bookmark</span> Save to Library

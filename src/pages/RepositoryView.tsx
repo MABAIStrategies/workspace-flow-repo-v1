@@ -180,22 +180,24 @@ const RepositoryView: React.FC<RepositoryViewProps> = ({ onFlowSelect }) => {
                     <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-6 text-white shadow-xl shadow-blue-900/10 relative overflow-hidden group">
                         <div className="absolute -right-4 -top-4 bg-white/10 w-24 h-24 rounded-full blur-xl group-hover:scale-150 transition-transform duration-700"></div>
                         <div className="relative z-10">
-                            <div className="text-blue-200 text-xs font-bold uppercase tracking-wider mb-2">Total Workflows</div>
+                            <div className="text-blue-200 text-xs font-bold uppercase tracking-wider mb-2">Total App store</div>
                             <div className="text-4xl font-display font-bold">{allFlows.length}</div>
-                            <div className="text-blue-100 text-sm mt-1 opacity-80">In your repository</div>
+                            <div className="text-blue-100 text-sm mt-1 opacity-80">Universal Workflows</div>
                         </div>
                     </div>
                     <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm relative">
-                        <div className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2">Your Workflows</div>
+                        <div className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2">Your Studio</div>
                         <div className="text-4xl font-display font-bold text-slate-800">{userFlows.length}</div>
                         <div className="text-emerald-600 text-xs font-bold mt-2 flex items-center bg-emerald-50 w-fit px-2 py-1 rounded-full">
-                            <span className="material-symbols-outlined text-sm mr-1">folder</span> Saved in Library
+                            <span className="material-symbols-outlined text-sm mr-1">bolt</span> Active Creations
                         </div>
                     </div>
-                    <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
-                        <div className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2">Top Category</div>
-                        <div className="text-4xl font-display font-bold text-slate-800">Sales</div>
-                        <div className="text-slate-500 text-sm mt-1">Lead routing & proposals</div>
+                    <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm relative overflow-hidden">
+                        <div className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2">Marketplace Est.</div>
+                        <div className="text-4xl font-display font-bold text-slate-800">$0.00</div>
+                        <div className="text-blue-600 text-[10px] font-bold mt-2 uppercase tracking-tight flex items-center gap-1">
+                            <span className="material-symbols-outlined text-xs">payments</span> Payout Foundation Ready
+                        </div>
                     </div>
                 </div>
 

@@ -186,8 +186,12 @@ const MainApp: React.FC = () => {
                         <div className="p-6 border-b border-slate-100 flex justify-between items-start bg-slate-50/50">
                             <div>
                                 <h3 className="text-2xl font-display font-bold text-slate-900">{selectedFlow.name}</h3>
-                                <div className="flex items-center gap-2 mt-2">
-                                    <span className="px-2 py-0.5 rounded text-xs font-bold uppercase bg-slate-100 text-slate-600 border border-slate-200">{selectedFlow.dept}</span>
+                                <div className="flex items-center gap-3 mt-2">
+                                    <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-100 text-slate-600 border border-slate-200">{selectedFlow.dept}</span>
+                                    <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-50 text-blue-600 border border-blue-100 flex items-center gap-1">
+                                        <span className="material-symbols-outlined text-[12px]">hub</span>
+                                        {selectedFlow.platform || "Google Workspace Studio"}
+                                    </span>
                                     <span className="w-1 h-1 rounded-full bg-slate-300"></span>
                                     <span className="text-sm text-slate-500">{selectedFlow.timeSaved} Saved</span>
                                 </div>
@@ -213,11 +217,17 @@ const MainApp: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="bg-slate-50 p-6 border-t border-slate-200 flex justify-end gap-3 sticky bottom-0">
-                            <button onClick={() => setSelectedFlow(null)} className="px-6 py-2.5 rounded-lg bg-white border border-slate-300 text-sm font-bold text-slate-700 hover:bg-slate-50">Close</button>
-                            <button className="px-6 py-2.5 rounded-lg bg-slate-900 text-white text-sm font-bold shadow-lg hover:bg-black flex items-center gap-2">
-                                <span className="material-symbols-outlined text-sm">bookmark</span> Save to Library
-                            </button>
+                        <div className="bg-slate-50 p-6 border-t border-slate-200 flex justify-between items-center sticky bottom-0">
+                            <div className="flex items-center gap-2">
+                                <span className="text-2xl font-bold text-slate-900">{selectedFlow.price ? `$${selectedFlow.price.toFixed(2)}` : "FREE"}</span>
+                                <span className="text-xs text-slate-500 font-bold uppercase">One-time Buy</span>
+                            </div>
+                            <div className="flex gap-3">
+                                <button onClick={() => setSelectedFlow(null)} className="px-6 py-2.5 rounded-lg bg-white border border-slate-300 text-sm font-bold text-slate-700 hover:bg-slate-50">Close</button>
+                                <button className="px-6 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-bold shadow-lg hover:bg-blue-700 flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-sm">shopping_cart</span> Buy & Implement
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

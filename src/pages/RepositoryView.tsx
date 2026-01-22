@@ -220,9 +220,15 @@ const RepositoryView: React.FC<RepositoryViewProps> = ({ onFlowSelect }) => {
                                 <div className={`h-1.5 w-full ${barClass}`}></div>
                                 <div className="p-6 flex flex-col flex-1">
                                     <div className="flex justify-between items-start mb-4">
-                                        <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-600 ring-1 ring-inset ring-slate-200 uppercase tracking-wider">{flow.dept}</span>
-                                        <div className="flex gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                                            <span className="material-symbols-outlined text-[18px] text-slate-400">integration_instructions</span>
+                                        <div className="flex flex-col gap-1">
+                                            <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-600 ring-1 ring-inset ring-slate-200 uppercase tracking-wider w-fit">{flow.dept}</span>
+                                            <span className="text-[10px] font-bold text-blue-600 uppercase tracking-tight flex items-center gap-1">
+                                                <span className="material-symbols-outlined text-[12px]">hub</span>
+                                                {flow.platform || "Google Workspace Studio"}
+                                            </span>
+                                        </div>
+                                        <div className="bg-slate-900 text-white px-2 py-1 rounded-md text-[10px] font-bold shadow-sm">
+                                            {flow.price ? `$${flow.price.toFixed(2)}` : "FREE"}
                                         </div>
                                     </div>
                                     <h4 className="font-display font-bold text-slate-900 text-xl leading-tight group-hover:text-blue-600 transition-colors mb-2">{flow.name}</h4>

@@ -48,6 +48,12 @@ create table workflows (
   action_chain text,
   tools text[], -- Array of strings e.g. ['Gmail', 'Slack']
   
+  -- NEW: Platform and Monetization Fields
+  platform text default 'Google Workspace' check (platform in ('Google Workspace', 'Zapier', 'n8n', 'Make', 'Custom', 'API-Based', 'Multi-Platform')),
+  price decimal(10, 2) default 0.00, -- Price in USD, 0.00 for free workflows
+  is_premium boolean default false,
+  tags text[], -- Array of tags for better categorization e.g. ['automation', 'email', 'crm']
+  
   -- Visual Properties for the "Book Spine"
   color_theme text, 
   spine_height integer default 28,
@@ -61,6 +67,9 @@ alter table workflows enable row level security;
 -- RLS Policies for Workflows
 create policy "Users can view their own workflows." 
   on workflows for select using (auth.uid() = user_id);
+
+create policy "Users can view public workflows."
+  on workflows for select using (is_public = true);
 
 create policy "Users can insert their own workflows." 
   on workflows for insert with check (auth.uid() = user_id);

@@ -20,15 +20,15 @@
 /* Glass Panels */
 .glass-panel {
   background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .glass-dark {
   background: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -43,7 +43,11 @@
 }
 .scrollbar-hide {
     -ms-overflow-style: none;
-    scrollbar-width: none;
+}
+@supports (scrollbar-width: none) {
+    .scrollbar-hide {
+        scrollbar-width: none;
+    }
 }
 
 .writing-vertical-rl { 
@@ -60,3 +64,22 @@
 @keyframes blink {
   50% { opacity: 0; }
 }
+
+/* Library Book Heights (Standardized for Studio View) */
+.book-h-24 { height: 96px; }
+.book-h-25 { height: 100px; }
+.book-h-26 { height: 104px; }
+.book-h-27 { height: 108px; }
+.book-h-28 { height: 112px; }
+.book-h-29 { height: 116px; }
+.book-h-30 { height: 120px; }
+.book-h-31 { height: 124px; }
+.book-h-32 { height: 128px; }
+
+/* Animation Delays */
+.delay-100 { animation-delay: 0.1s; }
+.delay-200 { animation-delay: 0.2s; }
+.delay-300 { animation-delay: 0.3s; }
+.delay-400 { animation-delay: 0.4s; }
+.delay-500 { animation-delay: 0.5s; }
+

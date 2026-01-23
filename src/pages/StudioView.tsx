@@ -157,8 +157,7 @@ const StudioView: React.FC<StudioViewProps> = () => {
                             {library.map(book => (
                                 <div
                                     key={book.id}
-                                    className={`group relative min-w-[32px] w-8 bg-gradient-to-r ${book.color} rounded-sm shadow-xl hover:-translate-y-4 transition-transform duration-300 cursor-pointer flex flex-col items-center justify-center py-2 border-l border-white/10 overflow-hidden`}
-                                    style={{ height: `${book.height * 4}px` }} // Scaling roughly to tailwind units
+                                    className={`group relative min-w-[32px] w-8 bg-gradient-to-r ${book.color} rounded-sm shadow-xl hover:-translate-y-4 transition-transform duration-300 cursor-pointer flex flex-col items-center justify-center py-2 border-l border-white/10 overflow-hidden book-h-${book.height}`}
                                 >
                                     <span className="writing-vertical-rl text-[10px] font-bold text-white/90 tracking-widest uppercase truncate w-full text-center h-full max-h-full">
                                         {book.name.length > 15 ? book.name.substring(0, 12) + '...' : book.name}

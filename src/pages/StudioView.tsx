@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AppTools } from '../lib/data';
+import { AppTools, AppDepts } from '../lib/data';
 import type { Platform } from '../types/database';
 
 interface StudioViewProps {
@@ -283,9 +283,7 @@ const StudioView: React.FC<StudioViewProps> = () => {
                                     <div>
                                         <label className="text-xs text-slate-500 mb-1 block">Department</label>
                                         <select aria-label="Department" value={dept} onChange={e => setDept(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all w-full">
-                                            {Object.values(AppTools).slice(0, 6).map(d => <option key={d}>{d}</option>)}
-                                            {/* Oops, used Tools instead of Depts. Fix below */}
-                                            <option>Sales</option><option>Marketing</option><option>HR</option><option>Finance</option><option>Operations</option>
+                                            {Object.values(AppDepts).map(d => <option key={d} value={d}>{d}</option>)}
                                         </select>
                                     </div>
                                     <div>

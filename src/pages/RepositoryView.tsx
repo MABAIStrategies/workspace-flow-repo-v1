@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { flowData } from '../lib/data';
+import { flowData, AppDepts } from '../lib/data';
 
 interface RepositoryViewProps {
     onFlowSelect: (flow: any) => void;
@@ -140,7 +140,7 @@ const RepositoryView: React.FC<RepositoryViewProps> = ({ onFlowSelect }) => {
                             {filterDept.size > 0 && <span onClick={() => setFilterDept(new Set())} className="text-[10px] underline cursor-pointer hover:text-white">Clear</span>}
                         </label>
                         <div className="space-y-2">
-                            {["Sales", "Marketing", "HR", "Operations", "Finance", "Executive", "IT/Eng"].map(d => (
+                            {Object.values(AppDepts).map(d => (
                                 <label key={d} onClick={() => toggleDept(d)} className="flex items-center gap-3 cursor-pointer group hover:bg-white/5 p-2 rounded-lg transition-colors">
                                     <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${filterDept.has(d) ? 'bg-white border-white' : 'border-blue-300/50 group-hover:border-white/80'}`}>
                                         {filterDept.has(d) && <span className="material-symbols-outlined text-[10px] text-blue-600 font-bold">check</span>}

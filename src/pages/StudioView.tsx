@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AppTools } from '../lib/data';
+import type { Platform } from '../types/database';
 
 interface StudioViewProps {
     // Props if needed
@@ -21,7 +22,10 @@ const StudioView: React.FC<StudioViewProps> = () => {
     const [trigger, setTrigger] = useState("");
     const [action, setAction] = useState("");
     const [selectedTools, setSelectedTools] = useState<Set<string>>(new Set());
-    const [platform, setPlatform] = useState("Google Workspace Studio");
+    const [platform, setPlatform] = useState<Platform>("Google Workspace");
+    const [price, setPrice] = useState<number>(0);
+    const [isPremium, setIsPremium] = useState(false);
+    const [tags, setTags] = useState<string>("");
     // Updated Result State to hold full object
     const [generatedResult, setGeneratedResult] = useState<{ title: string, desc: string, steps: string[], platform?: string, implementationPrompt?: string } | null>(null);
     const [isThinking, setIsThinking] = useState(false);
@@ -90,6 +94,9 @@ const StudioView: React.FC<StudioViewProps> = () => {
             steps: generatedResult.steps
         };
 
+        // Parse tags from comma-separated string
+        const tagsArray = tags.trim() ? tags.split(',').map(t => t.trim()).filter(t => t.length > 0) : [];
+
         const { data, error } = await supabase.from('workflows').insert({
             user_id: user.id,
             name: generatedResult.title || "New Workflow",
@@ -97,8 +104,11 @@ const StudioView: React.FC<StudioViewProps> = () => {
             department: dept,
             category: level,
             tools: Array.from(selectedTools),
-            is_public: isPublic,
-            platform: platform
+            platform: platform,
+            price: price,
+            is_premium: isPremium,
+            tags: tagsArray,
+            is_public: isPublic
         }).select().single();
 
         if (error) {
@@ -106,7 +116,14 @@ const StudioView: React.FC<StudioViewProps> = () => {
         } else {
             setLibrary([{ id: data.id, name: data.name, dept, color: randomColor, height }, ...library]);
             alert(isPublic ? "Saved & Published to Marketplace!" : "Saved to Private Library!");
-            setTrigger(""); setAction(""); setGeneratedResult(null); setSelectedTools(new Set()); setIsPublic(false);
+            setTrigger("");
+            setAction("");
+            setGeneratedResult(null);
+            setSelectedTools(new Set());
+            setIsPublic(false);
+            setPrice(0);
+            setIsPremium(false);
+            setTags("");
         }
     };
 
@@ -185,7 +202,7 @@ const StudioView: React.FC<StudioViewProps> = () => {
                                 <div className="grid grid-cols-2 gap-4 mb-4">
                                     <div>
                                         <label className="text-xs text-slate-500 mb-1 block">Department</label>
-                                        <select value={dept} onChange={e => setDept(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all w-full">
+                                        <select aria-label="Department" value={dept} onChange={e => setDept(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all w-full">
                                             {Object.values(AppTools).slice(0, 6).map(d => <option key={d}>{d}</option>)}
                                             {/* Oops, used Tools instead of Depts. Fix below */}
                                             <option>Sales</option><option>Marketing</option><option>HR</option><option>Finance</option><option>Operations</option>
@@ -193,7 +210,7 @@ const StudioView: React.FC<StudioViewProps> = () => {
                                     </div>
                                     <div>
                                         <label className="text-xs text-slate-500 mb-1 block">Automation Level</label>
-                                        <select value={level} onChange={e => setLevel(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all w-full">
+                                        <select aria-label="Automation Level" value={level} onChange={e => setLevel(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all w-full">
                                             <option value="hitl">Human in the Loop</option>
                                             <option value="triggered">Triggered Auto</option>
                                             <option value="background">Background</option>
@@ -202,14 +219,14 @@ const StudioView: React.FC<StudioViewProps> = () => {
                                 </div>
                                 <div className="mt-4">
                                     <label className="text-xs text-slate-500 mb-1 block">Target Platform</label>
-                                    <select value={platform} onChange={e => setPlatform(e.target.value)} className="bg-slate-900 text-white border-0 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all w-full font-bold">
-                                        <option>Google Workspace Studio</option>
-                                        <option>OpenAI GPT</option>
-                                        <option>GEM (Custom Agent)</option>
-                                        <option>Zapier / IFTTT</option>
-                                        <option>Mac / iOS Shortcut</option>
-                                        <option>Power Automate / AppSheet</option>
-                                        <option>Opal / Toolhouse</option>
+                                    <select aria-label="Target Platform" value={platform} onChange={e => setPlatform(e.target.value as Platform)} className="bg-slate-900 text-white border-0 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all w-full font-bold">
+                                        <option value="Google Workspace">Google Workspace</option>
+                                        <option value="Zapier">Zapier</option>
+                                        <option value="n8n">n8n</option>
+                                        <option value="Make">Make</option>
+                                        <option value="Custom">Custom</option>
+                                        <option value="API-Based">API-Based</option>
+                                        <option value="Multi-Platform">Multi-Platform</option>
                                     </select>
                                 </div>
                                 <div>
@@ -225,6 +242,48 @@ const StudioView: React.FC<StudioViewProps> = () => {
                                             </button>
                                         ))}
                                     </div>
+                                </div>
+                            </div>
+
+                            {/* Pricing & Tags */}
+                            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                                <h3 className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2 flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-sm">sell</span> Pricing & Tags
+                                </h3>
+                                <div className="grid grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <label className="text-xs text-slate-500 mb-1 block">Price (USD)</label>
+                                        <input
+                                            type="number"
+                                            value={price}
+                                            onChange={e => setPrice(parseFloat(e.target.value) || 0)}
+                                            min="0"
+                                            step="0.01"
+                                            className="bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all w-full"
+                                            placeholder="0.00"
+                                        />
+                                    </div>
+                                    <div className="flex items-end">
+                                        <label className="flex items-center gap-2 cursor-pointer bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 w-full hover:bg-slate-100 transition-colors">
+                                            <input
+                                                type="checkbox"
+                                                checked={isPremium}
+                                                onChange={e => setIsPremium(e.target.checked)}
+                                                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                            />
+                                            <span className="text-xs font-semibold text-slate-700">Premium Workflow</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="text-xs text-slate-500 mb-1 block">Tags (comma-separated)</label>
+                                    <input
+                                        type="text"
+                                        value={tags}
+                                        onChange={e => setTags(e.target.value)}
+                                        className="bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all w-full"
+                                        placeholder="e.g. automation, email, crm"
+                                    />
                                 </div>
                             </div>
 

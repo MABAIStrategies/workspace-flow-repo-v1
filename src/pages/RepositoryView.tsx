@@ -10,6 +10,8 @@ const RepositoryView: React.FC<RepositoryViewProps> = ({ onFlowSelect }) => {
     const [filterDept, setFilterDept] = useState<Set<string>>(new Set());
     const [filterLevel, setFilterLevel] = useState<Set<string>>(new Set());
     const [filterPlatform, setFilterPlatform] = useState<Set<string>>(new Set());
+    const [filterPriceRange, setFilterPriceRange] = useState<'all' | 'free' | 'paid'>('all');
+    const [filterTags, setFilterTags] = useState<Set<string>>(new Set());
     const [userFlows, setUserFlows] = useState<any[]>([]);
 
     // Load User Flows from DB
@@ -35,16 +37,21 @@ const RepositoryView: React.FC<RepositoryViewProps> = ({ onFlowSelect }) => {
                     } catch (e) { }
 
                     return {
-                        id: `db-${row.id}`, // specific ID format
-                        rank: 0, // Top rank
+                        id: `db-${row.id}`,
+                        rank: 0,
                         name: row.name,
-                        category: meta.level,
-                        dept: meta.dept,
-                        tools: meta.tools,
-                        platform: row.platform || 'Google Workspace Studio',
+                        category: row.category || meta.level,
+                        dept: row.department || meta.dept,
+                        tools: row.tools || meta.tools,
+                        platform: row.platform || 'Google Workspace',
+                        price: row.price || 0,
+                        isPremium: row.is_premium || false,
+                        tags: row.tags || [],
+                        steps: (meta as any).steps || [],
                         timeSaved: 'Draft',
-                        action: 'Custom Workflow',
-                        isUser: true // Flag for UI
+                        action: row.description && !row.description.startsWith('{') ? row.description : (meta as any).desc || 'Custom Workflow',
+                        isUser: true,
+                        raw: row
                     };
                 });
                 setUserFlows(mapped);
@@ -78,13 +85,26 @@ const RepositoryView: React.FC<RepositoryViewProps> = ({ onFlowSelect }) => {
     };
 
     const filtered = allFlows.filter(flow => {
-        const matchesSearch = flow.name.toLowerCase().includes(filterSearch.toLowerCase()) ||
-            flow.action.toLowerCase().includes(filterSearch.toLowerCase());
+        const matchesSearch =
+            flow.name.toLowerCase().includes(filterSearch.toLowerCase()) ||
+            (flow.action || "").toLowerCase().includes(filterSearch.toLowerCase());
+
         const matchesDept = filterDept.size === 0 || filterDept.has(flow.dept);
         const matchesLevel = filterLevel.size === 0 || filterLevel.has(flow.category);
-        const matchesPlatform = filterPlatform.size === 0 || filterPlatform.has(flow.platform || "Google Workspace Studio");
 
-        return matchesSearch && matchesDept && matchesLevel && matchesPlatform;
+        // Normalize platform matching for static data
+        const flowPlatform = flow.platform || "Google Workspace";
+        const normalizedPlatform = flowPlatform === "Google Workspace Studio" ? "Google Workspace" : flowPlatform;
+        const matchesPlatform = filterPlatform.size === 0 || filterPlatform.has(normalizedPlatform);
+
+        const isFree = (flow.price || 0) === 0;
+        const matchesPrice = filterPriceRange === 'all' ||
+            (filterPriceRange === 'free' && isFree) ||
+            (filterPriceRange === 'paid' && !isFree);
+
+        const matchesTags = filterTags.size === 0 || (flow.tags || []).some((t: string) => filterTags.has(t));
+
+        return matchesSearch && matchesDept && matchesLevel && matchesPlatform && matchesPrice && matchesTags;
     }).sort((a, b) => {
         // User flows first, then rank
         if (a.isUser && !b.isUser) return -1;
@@ -159,12 +179,51 @@ const RepositoryView: React.FC<RepositoryViewProps> = ({ onFlowSelect }) => {
                             {filterPlatform.size > 0 && <span onClick={() => setFilterPlatform(new Set())} className="text-[10px] underline cursor-pointer hover:text-white">Clear</span>}
                         </label>
                         <div className="space-y-1">
-                            {["Google Workspace Studio", "OpenAI GPT", "GEM (Custom Agent)", "Zapier / IFTTT", "Mac / iOS Shortcut", "Power Automate / AppSheet", "Opal / Toolhouse"].map(p => (
+                            {["Google Workspace", "Zapier", "n8n", "Make", "Custom", "API-Based", "Multi-Platform"].map(p => (
                                 <label key={p} onClick={() => togglePlatform(p)} className="flex items-center gap-3 cursor-pointer group hover:bg-white/5 p-2 rounded-lg transition-colors">
                                     <div className={`w-3 h-3 rounded-full border flex items-center justify-center transition-all ${filterPlatform.has(p) ? 'bg-emerald-400 border-emerald-400' : 'border-blue-300/50 group-hover:border-white/80'}`}>
                                     </div>
                                     <span className={`text-[11px] ${filterPlatform.has(p) ? 'text-white font-bold' : 'text-blue-100 group-hover:text-white'}`}>{p}</span>
                                 </label>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Price Filter */}
+                    <div>
+                        <label className="text-xs font-bold text-blue-200 uppercase tracking-wider mb-3 block">Price</label>
+                        <div className="flex bg-white/10 p-1 rounded-xl border border-white/20 shadow-inner">
+                            {(['all', 'free', 'paid'] as const).map(option => (
+                                <button
+                                    key={option}
+                                    onClick={() => setFilterPriceRange(option)}
+                                    className={`flex-1 py-2 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all ${filterPriceRange === option ? 'bg-white text-blue-600 shadow-md' : 'text-blue-100 hover:text-white'}`}
+                                >
+                                    {option}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Tags Filter */}
+                    <div>
+                        <label className="text-xs font-bold text-blue-200 uppercase tracking-wider mb-3 block flex justify-between">
+                            Featured Tags
+                            {filterTags.size > 0 && <span onClick={() => setFilterTags(new Set())} className="text-[10px] underline cursor-pointer hover:text-white">Clear</span>}
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                            {Array.from(new Set(allFlows.flatMap(f => f.tags || []))).slice(0, 12).map(tag => (
+                                <button
+                                    key={tag}
+                                    onClick={() => {
+                                        const newSet = new Set(filterTags);
+                                        if (newSet.has(tag)) newSet.delete(tag); else newSet.add(tag);
+                                        setFilterTags(newSet);
+                                    }}
+                                    className={`px-3 py-1.5 rounded-full text-[10px] font-bold border transition-all ${filterTags.has(tag) ? 'bg-white text-blue-600 border-white' : 'bg-white/5 border-white/20 text-blue-200 hover:border-white/40'}`}
+                                >
+                                    #{tag}
+                                </button>
                             ))}
                         </div>
                     </div>
@@ -193,10 +252,12 @@ const RepositoryView: React.FC<RepositoryViewProps> = ({ onFlowSelect }) => {
                         </div>
                     </div>
                     <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm relative overflow-hidden">
-                        <div className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2">Marketplace Est.</div>
-                        <div className="text-4xl font-display font-bold text-slate-800">$0.00</div>
+                        <div className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2">Marketplace Value</div>
+                        <div className="text-4xl font-display font-bold text-slate-800">
+                            ${allFlows.reduce((acc, f) => acc + (f.price || 0), 0).toFixed(2)}
+                        </div>
                         <div className="text-blue-600 text-[10px] font-bold mt-2 uppercase tracking-tight flex items-center gap-1">
-                            <span className="material-symbols-outlined text-xs">payments</span> Payout Foundation Ready
+                            <span className="material-symbols-outlined text-xs">payments</span> Total Asset Liquidity
                         </div>
                     </div>
                 </div>
@@ -234,7 +295,16 @@ const RepositoryView: React.FC<RepositoryViewProps> = ({ onFlowSelect }) => {
                                         </div>
                                     </div>
                                     <h4 className="font-display font-bold text-slate-900 text-xl leading-tight group-hover:text-blue-600 transition-colors mb-2">{flow.name}</h4>
-                                    <p className="text-sm text-slate-500 line-clamp-2 mb-6 flex-1 font-medium">{flow.action}</p>
+                                    <p className="text-sm text-slate-500 line-clamp-2 mb-4 flex-1 font-medium">{flow.action}</p>
+
+                                    {flow.tags && flow.tags.length > 0 && (
+                                        <div className="flex flex-wrap gap-1 mb-6">
+                                            {flow.tags.slice(0, 3).map((tag: string) => (
+                                                <span key={tag} className="px-1.5 py-0.5 bg-slate-50 text-slate-400 text-[10px] font-bold rounded uppercase">#{tag}</span>
+                                            ))}
+                                        </div>
+                                    )}
+
                                     <div className="flex items-center justify-between pt-4 border-t border-slate-100 mt-auto">
                                         <div className={`flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded ${badgeClass}`}>
                                             {badgeText}

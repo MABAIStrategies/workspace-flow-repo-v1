@@ -29,6 +29,7 @@ const StudioView: React.FC<StudioViewProps> = () => {
     // Updated Result State to hold full object
     const [generatedResult, setGeneratedResult] = useState<{ title: string, desc: string, steps: string[], platform?: string, implementationPrompt?: string } | null>(null);
     const [isThinking, setIsThinking] = useState(false);
+    const [editingId, setEditingId] = useState<number | null>(null);
     const [isPublic, setIsPublic] = useState(false);
 
     // Initial Fetch (Library)
@@ -97,7 +98,7 @@ const StudioView: React.FC<StudioViewProps> = () => {
         // Parse tags from comma-separated string
         const tagsArray = tags.trim() ? tags.split(',').map(t => t.trim()).filter(t => t.length > 0) : [];
 
-        const { data, error } = await supabase.from('workflows').insert({
+        const workflowData = {
             user_id: user.id,
             name: generatedResult.title || "New Workflow",
             description: JSON.stringify(metaPayload),
@@ -109,21 +110,83 @@ const StudioView: React.FC<StudioViewProps> = () => {
             is_premium: isPremium,
             tags: tagsArray,
             is_public: isPublic
-        }).select().single();
+        };
+
+        const { data, error } = editingId
+            ? await supabase.from('workflows').update(workflowData).eq('id', editingId).select().single()
+            : await supabase.from('workflows').insert(workflowData).select().single();
 
         if (error) {
             alert("Error saving: " + error.message);
         } else {
-            setLibrary([{ id: data.id, name: data.name, dept, color: randomColor, height }, ...library]);
-            alert(isPublic ? "Saved & Published to Marketplace!" : "Saved to Private Library!");
-            setTrigger("");
-            setAction("");
-            setGeneratedResult(null);
-            setSelectedTools(new Set());
-            setIsPublic(false);
-            setPrice(0);
-            setIsPremium(false);
-            setTags("");
+            if (editingId) {
+                setLibrary(library.map(b => b.id === data.id ? { ...b, name: data.name, dept, color: randomColor, height } : b));
+            } else {
+                setLibrary([{ id: data.id, name: data.name, dept, color: randomColor, height }, ...library]);
+            }
+            alert(isPublic ? "Saved & Published to Marketplace!" : "Saved to Studio Library!");
+            resetStudio();
+        }
+    };
+
+    const resetStudio = () => {
+        setEditingId(null);
+        setTrigger("");
+        setAction("");
+        setGeneratedResult(null);
+        setSelectedTools(new Set());
+        setIsPublic(false);
+        setPrice(0);
+        setIsPremium(false);
+        setTags("");
+        setDept("Sales");
+        setLevel("hitl");
+        setPlatform("Google Workspace");
+    };
+
+    const loadWorkflow = async (id: number) => {
+        const { supabase } = await import('../lib/supabase');
+        const { data, error } = await supabase.from('workflows').select('*').eq('id', id).single();
+
+        if (data && !error) {
+            setEditingId(data.id);
+            setDept(data.department || "Sales");
+            setLevel(data.category || "hitl");
+            setPlatform(data.platform || "Google Workspace");
+            setPrice(data.price || 0);
+            setIsPremium(data.is_premium || false);
+            setTags(data.tags ? data.tags.join(', ') : "");
+            setSelectedTools(new Set(data.tools || []));
+
+            let desc = "";
+            let steps = [];
+            try {
+                const parsed = JSON.parse(data.description);
+                desc = parsed.desc || "";
+                steps = parsed.steps || [];
+            } catch (e) { }
+
+            setGeneratedResult({
+                title: data.name,
+                desc: desc,
+                steps: steps,
+                platform: data.platform
+            });
+        }
+    };
+
+    const deleteWorkflow = async (e: React.MouseEvent, id: number) => {
+        e.stopPropagation();
+        if (!confirm("Are you sure you want to delete this workflow?")) return;
+
+        const { supabase } = await import('../lib/supabase');
+        const { error } = await supabase.from('workflows').delete().eq('id', id);
+
+        if (error) {
+            alert("Error deleting: " + error.message);
+        } else {
+            setLibrary(library.filter(b => b.id !== id));
+            if (editingId === id) resetStudio();
         }
     };
 
@@ -153,16 +216,25 @@ const StudioView: React.FC<StudioViewProps> = () => {
                         </div>
 
                         {/* Books */}
-                        <div className="space-y-8 px-2 pt-4 relative z-10 flex flex-row flex-wrap items-end gap-1">
+                        <div className="space-y-4 px-2 pt-4 relative z-10 flex flex-row flex-wrap items-end gap-2">
                             {library.map(book => (
                                 <div
                                     key={book.id}
-                                    className={`group relative min-w-[32px] w-8 bg-gradient-to-r ${book.color} rounded-sm shadow-xl hover:-translate-y-4 transition-transform duration-300 cursor-pointer flex flex-col items-center justify-center py-2 border-l border-white/10 overflow-hidden book-h-${book.height}`}
+                                    onClick={() => loadWorkflow(book.id)}
+                                    className={`group relative min-w-[32px] w-8 bg-gradient-to-r ${book.color} rounded-sm shadow-xl hover:-translate-y-4 transition-transform duration-300 cursor-pointer flex flex-col items-center justify-center py-2 border-l border-white/10 overflow-hidden book-h-${book.height} ${editingId === book.id ? 'ring-2 ring-amber-400 ring-offset-2 ring-offset-black/50' : ''}`}
                                 >
                                     <span className="writing-vertical-rl text-[10px] font-bold text-white/90 tracking-widest uppercase truncate w-full text-center h-full max-h-full">
                                         {book.name.length > 15 ? book.name.substring(0, 12) + '...' : book.name}
                                     </span>
                                     <div className="absolute top-0 w-full h-1 bg-white/20"></div>
+
+                                    {/* Delete Button */}
+                                    <button
+                                        onClick={(e) => deleteWorkflow(e, book.id)}
+                                        className="absolute bottom-1 opacity-0 group-hover:opacity-100 transition-opacity text-white hover:text-red-400"
+                                    >
+                                        <span className="material-symbols-outlined text-xs">delete</span>
+                                    </button>
                                 </div>
                             ))}
                         </div>
@@ -171,13 +243,22 @@ const StudioView: React.FC<StudioViewProps> = () => {
             </aside>
 
             {/* Studio Workspace */}
-            <main className="flex-1 bg-slate-100 overflow-y-auto custom-scrollbar p-4 sm:p-8 flex items-center justify-center">
-                <div className="max-w-4xl w-full">
+            <main className="flex-1 bg-slate-100 overflow-y-auto custom-scrollbar p-4 sm:p-8 flex items-start justify-center">
+                <div className="max-w-7xl w-full">
                     <div className="flex justify-between items-center mb-6">
                         <div>
-                            <h2 className="text-2xl font-bold font-display text-slate-900">Workflow Studio</h2>
+                            <h2 className="text-2xl font-bold font-display text-slate-900">
+                                {editingId ? 'Editing Workflow' : 'Workflow Studio'}
+                                {editingId && <span className="ml-2 text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-full uppercase tracking-tighter align-middle">ID: {editingId}</span>}
+                            </h2>
                             <p className="text-slate-500 text-sm">Design, test, and deploy new automation agents.</p>
                         </div>
+                        <button
+                            onClick={resetStudio}
+                            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-sm"
+                        >
+                            <span className="material-symbols-outlined text-sm">add</span> New Workflow
+                        </button>
                         <div className="flex gap-2 items-center">
                             <label className="flex items-center gap-2 mr-2 cursor-pointer">
                                 <span className="text-xs font-bold text-slate-500 uppercase">Publish?</span>

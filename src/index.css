@@ -32,6 +32,35 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.glass-premium {
+  background: rgba(255, 255, 255, 0.05);
+  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+}
+
+/* Texture Overlays */
+.texture-leather {
+  background-image: url('/Images/leather_texture.png');
+  background-size: cover;
+  background-blend-mode: overlay;
+}
+
+.texture-carbon {
+  background-image: url('/Images/carbon_texture.png');
+  background-size: cover;
+  background-blend-mode: overlay;
+}
+
+.glow-blue {
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+}
+
+.glow-amber {
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.5);
+}
+
 /* Utilities */
 .card-hover:hover {
   transform: translateY(-4px);
@@ -39,20 +68,22 @@
 }
 
 .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-}
-.scrollbar-hide {
-    -ms-overflow-style: none;
-}
-@supports (scrollbar-width: none) {
-    .scrollbar-hide {
-        scrollbar-width: none;
-    }
+  display: none;
 }
 
-.writing-vertical-rl { 
-  writing-mode: vertical-rl; 
-  text-orientation: mixed; 
+.scrollbar-hide {
+  -ms-overflow-style: none;
+}
+
+@supports (scrollbar-width: none) {
+  .scrollbar-hide {
+    scrollbar-width: none;
+  }
+}
+
+.writing-vertical-rl {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
 }
 
 /* Studio Loading Animation */
@@ -62,24 +93,65 @@
 }
 
 @keyframes blink {
-  50% { opacity: 0; }
+  50% {
+    opacity: 0;
+  }
 }
 
 /* Library Book Heights (Standardized for Studio View) */
-.book-h-24 { height: 96px; }
-.book-h-25 { height: 100px; }
-.book-h-26 { height: 104px; }
-.book-h-27 { height: 108px; }
-.book-h-28 { height: 112px; }
-.book-h-29 { height: 116px; }
-.book-h-30 { height: 120px; }
-.book-h-31 { height: 124px; }
-.book-h-32 { height: 128px; }
+.book-h-24 {
+  height: 96px;
+}
+
+.book-h-25 {
+  height: 100px;
+}
+
+.book-h-26 {
+  height: 104px;
+}
+
+.book-h-27 {
+  height: 108px;
+}
+
+.book-h-28 {
+  height: 112px;
+}
+
+.book-h-29 {
+  height: 116px;
+}
+
+.book-h-30 {
+  height: 120px;
+}
+
+.book-h-31 {
+  height: 124px;
+}
+
+.book-h-32 {
+  height: 128px;
+}
 
 /* Animation Delays */
-.delay-100 { animation-delay: 0.1s; }
-.delay-200 { animation-delay: 0.2s; }
-.delay-300 { animation-delay: 0.3s; }
-.delay-400 { animation-delay: 0.4s; }
-.delay-500 { animation-delay: 0.5s; }
+.delay-100 {
+  animation-delay: 0.1s;
+}
 
+.delay-200 {
+  animation-delay: 0.2s;
+}
+
+.delay-300 {
+  animation-delay: 0.3s;
+}
+
+.delay-400 {
+  animation-delay: 0.4s;
+}
+
+.delay-500 {
+  animation-delay: 0.5s;
+}

@@ -217,11 +217,11 @@ const StudioView: React.FC<StudioViewProps> = () => {
 
                         {/* Books */}
                         <div className="space-y-4 px-2 pt-4 relative z-10 flex flex-row flex-wrap items-end gap-2">
-                            {library.map(book => (
+                            {library.map((book, idx) => (
                                 <div
                                     key={book.id}
                                     onClick={() => loadWorkflow(book.id)}
-                                    className={`group relative min-w-[32px] w-8 bg-gradient-to-r ${book.color} rounded-sm shadow-xl hover:-translate-y-4 transition-transform duration-300 cursor-pointer flex flex-col items-center justify-center py-2 border-l border-white/10 overflow-hidden book-h-${book.height} ${editingId === book.id ? 'ring-2 ring-amber-400 ring-offset-2 ring-offset-black/50' : ''}`}
+                                    className={`group relative min-w-[32px] w-8 bg-gradient-to-r ${book.color} rounded-sm shadow-xl hover:-translate-y-4 transition-transform duration-300 cursor-pointer flex flex-col items-center justify-center py-2 border-l border-white/10 overflow-hidden book-h-${book.height} ${editingId === book.id ? 'ring-2 ring-amber-400 ring-offset-2 ring-offset-black/50 glow-amber' : ''} ${idx % 3 === 0 ? 'texture-leather' : idx % 3 === 1 ? 'texture-carbon' : ''}`}
                                 >
                                     <span className="writing-vertical-rl text-[10px] font-bold text-white/90 tracking-widest uppercase truncate w-full text-center h-full max-h-full">
                                         {book.name.length > 15 ? book.name.substring(0, 12) + '...' : book.name}

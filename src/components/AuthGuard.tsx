@@ -1,39 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
 
 const AuthGuard = ({ children }: { children: React.ReactNode }) => {
-    const [session, setSession] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
+    const { session, loading } = useAuth();
     const navigate = useNavigate();
 
     useEffect(() => {
-        // Check active session
-        const checkSession = async () => {
-            // 1. Check if user is in "Demo Mode" (Bypass)
-            const isDemo = localStorage.getItem('demo_mode') === 'true';
-            if (isDemo) {
-                setSession({ user: { id: 'demo-user', email: 'demo@example.com' } });
-                setLoading(false);
-                return; // Stop here, do not subscribe to Supabase
-            }
+        if (!loading && !session) {
+            navigate('/login');
+        }
+    }, [loading, session, navigate]);
 
-            // 2. Check Real Supabase Session
-            const { data: { session } } = await supabase.auth.getSession();
-            setSession(session);
-            setLoading(false);
-
-            // Only listen for changes if NOT in demo mode
-            const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-                setSession(session);
-            });
-            return () => subscription.unsubscribe();
-        };
-
-        checkSession();
-    }, []);
-
-    // Real Implementation
     if (loading) {
         return (
             <div className="h-screen bg-slate-900 flex items-center justify-center">
@@ -46,12 +24,11 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
     }
 
     if (!session) {
-        // Redirect to login if not authenticated
-        setTimeout(() => navigate('/login'), 0);
-        return null;
+        return null; // Navigation is handled in useEffect
     }
 
     return <>{children}</>;
 };
 
 export default AuthGuard;
+

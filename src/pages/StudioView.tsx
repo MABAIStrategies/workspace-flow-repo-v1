@@ -299,6 +299,8 @@ const StudioView: React.FC<StudioViewProps> = () => {
                                     <label className="text-xs text-slate-500 mb-1 block">Target Platform</label>
                                     <select aria-label="Target Platform" value={platform} onChange={e => setPlatform(e.target.value as Platform)} className="bg-slate-900 text-white border-0 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all w-full font-bold">
                                         <option value="Google Workspace">Google Workspace</option>
+                                        <option value="Microsoft 365">Microsoft 365</option>
+                                        <option value="Slack">Slack</option>
                                         <option value="Zapier">Zapier</option>
                                         <option value="n8n">n8n</option>
                                         <option value="Make">Make</option>
@@ -306,6 +308,7 @@ const StudioView: React.FC<StudioViewProps> = () => {
                                         <option value="API-Based">API-Based</option>
                                         <option value="Multi-Platform">Multi-Platform</option>
                                     </select>
+
                                 </div>
                                 <div>
                                     <label className="text-xs text-slate-500 mb-1 block">Integrated Tools</label>

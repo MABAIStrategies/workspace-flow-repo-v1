@@ -2,6 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  body {
+    @apply font-outfit text-slate-900 bg-slate-50;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-syne font-extrabold tracking-tight;
+  }
+}
+
 /* Custom Scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
@@ -15,6 +30,23 @@
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background-color: #cbd5e1;
   border-radius: 20px;
+}
+
+.custom-scrollbar-dark::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar-dark::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar-dark::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+}
+
+.custom-scrollbar-dark::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 /* Glass Panels */
@@ -41,6 +73,36 @@
 }
 
 /* Texture Overlays */
+.noise-overlay {
+  position: relative;
+}
+
+.noise-overlay::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.15;
+  pointer-events: none;
+  background-image: url("https://grainy-gradients.vercel.app/noise.svg");
+  mix-blend-mode: multiply;
+  z-index: 1;
+}
+
+.mesh-gradient {
+  background-color: #4158D0;
+  background-image: linear-gradient(43deg, #4158D0 0%, #C850C0 46%, #FFCC70 100%);
+}
+
+.mesh-dark {
+  background-color: #000000;
+  background-image: radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 1) 0, transparent 50%),
+    radial-gradient(at 50% 0%, hsla(225, 39%, 30%, 1) 0, transparent 50%),
+    radial-gradient(at 100% 0%, hsla(339, 49%, 30%, 1) 0, transparent 50%);
+}
+
 .texture-leather {
   background-image: url('/Images/leather_texture.png');
   background-size: cover;
@@ -63,8 +125,21 @@
 
 /* Utilities */
 .card-hover:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 30px 60px -12px rgba(50, 50, 93, 0.25), 0 18px 36px -18px rgba(0, 0, 0, 0.3);
+}
+
+.reveal-stagger {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: reveal 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes reveal {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .scrollbar-hide::-webkit-scrollbar {
@@ -98,43 +173,6 @@
   }
 }
 
-/* Library Book Heights (Standardized for Studio View) */
-.book-h-24 {
-  height: 96px;
-}
-
-.book-h-25 {
-  height: 100px;
-}
-
-.book-h-26 {
-  height: 104px;
-}
-
-.book-h-27 {
-  height: 108px;
-}
-
-.book-h-28 {
-  height: 112px;
-}
-
-.book-h-29 {
-  height: 116px;
-}
-
-.book-h-30 {
-  height: 120px;
-}
-
-.book-h-31 {
-  height: 124px;
-}
-
-.book-h-32 {
-  height: 128px;
-}
-
 /* Animation Delays */
 .delay-100 {
   animation-delay: 0.1s;
@@ -155,3 +193,49 @@
 .delay-500 {
   animation-delay: 0.5s;
 }
+/* Staggered Delays */
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.10s; }
+.stagger-3 { animation-delay: 0.15s; }
+.stagger-4 { animation-delay: 0.20s; }
+.stagger-5 { animation-delay: 0.25s; }
+.stagger-6 { animation-delay: 0.30s; }
+.stagger-7 { animation-delay: 0.35s; }
+.stagger-8 { animation-delay: 0.40s; }
+.stagger-9 { animation-delay: 0.45s; }
+.stagger-10 { animation-delay: 0.50s; }
+.stagger-11 { animation-delay: 0.55s; }
+.stagger-12 { animation-delay: 0.60s; }
+.stagger-13 { animation-delay: 0.65s; }
+.stagger-14 { animation-delay: 0.70s; }
+.stagger-15 { animation-delay: 0.75s; }
+.stagger-16 { animation-delay: 0.80s; }
+.stagger-17 { animation-delay: 0.85s; }
+.stagger-18 { animation-delay: 0.90s; }
+.stagger-19 { animation-delay: 0.95s; }
+.stagger-20 { animation-delay: 1.00s; }
+
+.progress-bar-fill { width: var(--progress-width, 0%); }
+
+/* Percentage Width Classes */
+.w-pct-0 { width: 0%; }
+.w-pct-5 { width: 5%; }
+.w-pct-10 { width: 10%; }
+.w-pct-15 { width: 15%; }
+.w-pct-20 { width: 20%; }
+.w-pct-25 { width: 25%; }
+.w-pct-30 { width: 30%; }
+.w-pct-35 { width: 35%; }
+.w-pct-40 { width: 40%; }
+.w-pct-45 { width: 45%; }
+.w-pct-50 { width: 50%; }
+.w-pct-55 { width: 55%; }
+.w-pct-60 { width: 60%; }
+.w-pct-65 { width: 65%; }
+.w-pct-70 { width: 70%; }
+.w-pct-75 { width: 75%; }
+.w-pct-80 { width: 80%; }
+.w-pct-85 { width: 85%; }
+.w-pct-90 { width: 90%; }
+.w-pct-95 { width: 95%; }
+.w-pct-100 { width: 100%; }

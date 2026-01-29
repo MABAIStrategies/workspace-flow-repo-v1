@@ -10,6 +10,7 @@ const RepositoryView: React.FC<RepositoryViewProps> = ({ onFlowSelect }) => {
     const [filterDept, setFilterDept] = useState<Set<string>>(new Set());
     const [filterLevel, setFilterLevel] = useState<Set<string>>(new Set());
     const [filterPlatform, setFilterPlatform] = useState<Set<string>>(new Set());
+    const [filterTier, setFilterTier] = useState<Set<string>>(new Set());
     const [filterPriceRange, setFilterPriceRange] = useState<'all' | 'free' | 'paid'>('all');
     const [filterTags, setFilterTags] = useState<Set<string>>(new Set());
     const [userFlows, setUserFlows] = useState<any[]>([]);
@@ -21,7 +22,6 @@ const RepositoryView: React.FC<RepositoryViewProps> = ({ onFlowSelect }) => {
 
             if (data) {
                 const mapped = data.map((row: any) => {
-                    // Parse metadata
                     let meta = { dept: 'General', level: 'hitl', tools: [] };
                     try {
                         if (row.description && row.description.startsWith('{')) {
@@ -38,7 +38,7 @@ const RepositoryView: React.FC<RepositoryViewProps> = ({ onFlowSelect }) => {
 
                     return {
                         id: `db-${row.id}`,
-                        rank: 0,
+                        rank: row.rank || 0,
                         name: row.name,
                         category: row.category || meta.level,
                         dept: row.department || meta.dept,
@@ -46,6 +46,7 @@ const RepositoryView: React.FC<RepositoryViewProps> = ({ onFlowSelect }) => {
                         platform: row.platform || 'Google Workspace',
                         price: row.price || 0,
                         isPremium: row.is_premium || false,
+                        tier: row.tier || 'Standard',
                         tags: row.tags || [],
                         steps: (meta as any).steps || [],
                         timeSaved: 'Draft',
@@ -63,25 +64,11 @@ const RepositoryView: React.FC<RepositoryViewProps> = ({ onFlowSelect }) => {
     // Combine Lists
     const allFlows = [...userFlows, ...flowData];
 
-    const toggleDept = (dept: string) => {
-        const newSet = new Set(filterDept);
-        if (newSet.has(dept)) newSet.delete(dept);
-        else newSet.add(dept);
-        setFilterDept(newSet);
-    };
-
-    const toggleLevel = (cat: string) => {
-        const newSet = new Set(filterLevel);
-        if (newSet.has(cat)) newSet.delete(cat);
-        else newSet.add(cat);
-        setFilterLevel(newSet);
-    };
-
-    const togglePlatform = (p: string) => {
-        const newSet = new Set(filterPlatform);
-        if (newSet.has(p)) newSet.delete(p);
-        else newSet.add(p);
-        setFilterPlatform(newSet);
+    const toggleSet = (set: Set<string>, setter: (s: Set<string>) => void, val: string) => {
+        const newSet = new Set(set);
+        if (newSet.has(val)) newSet.delete(val);
+        else newSet.add(val);
+        setter(newSet);
     };
 
     const filtered = allFlows.filter(flow => {
@@ -91,8 +78,8 @@ const RepositoryView: React.FC<RepositoryViewProps> = ({ onFlowSelect }) => {
 
         const matchesDept = filterDept.size === 0 || filterDept.has(flow.dept);
         const matchesLevel = filterLevel.size === 0 || filterLevel.has(flow.category);
+        const matchesTier = filterTier.size === 0 || filterTier.has(flow.tier || 'Standard');
 
-        // Normalize platform matching for static data
         const flowPlatform = flow.platform || "Google Workspace";
         const normalizedPlatform = flowPlatform === "Google Workspace Studio" ? "Google Workspace" : flowPlatform;
         const matchesPlatform = filterPlatform.size === 0 || filterPlatform.has(normalizedPlatform);
@@ -104,28 +91,29 @@ const RepositoryView: React.FC<RepositoryViewProps> = ({ onFlowSelect }) => {
 
         const matchesTags = filterTags.size === 0 || (flow.tags || []).some((t: string) => filterTags.has(t));
 
-        return matchesSearch && matchesDept && matchesLevel && matchesPlatform && matchesPrice && matchesTags;
+        return matchesSearch && matchesDept && matchesLevel && matchesPlatform && matchesPrice && matchesTags && matchesTier;
     }).sort((a, b) => {
-        // User flows first, then rank
+        if (a.tier === 'GEM' && b.tier !== 'GEM') return -1;
+        if (a.tier !== 'GEM' && b.tier === 'GEM') return 1;
         if (a.isUser && !b.isUser) return -1;
         if (!a.isUser && b.isUser) return 1;
         return a.rank - b.rank;
     });
 
     return (
-        <div className="flex flex-1 overflow-hidden max-w-[1920px] mx-auto w-full transition-opacity duration-300">
-            {/* Sidebar Filters - Functional Phase 2 */}
-            <aside className="w-80 bg-gradient-to-b from-blue-600 to-indigo-700 border-r border-blue-800 flex-col hidden md:flex overflow-y-auto custom-scrollbar z-20 text-white">
-                <div className="p-6 space-y-8">
+        <div className="flex flex-1 overflow-hidden max-w-full mx-auto w-full transition-opacity duration-300 bg-slate-50 font-outfit">
+            {/* Sidebar Filters */}
+            <aside className="w-80 bg-white border-r border-slate-200 flex-col hidden lg:flex overflow-y-auto custom-scrollbar z-20 shrink-0">
+                <div className="p-8 space-y-10">
                     <div>
-                        <label className="text-xs font-bold text-blue-200 uppercase tracking-wider mb-3 block">Search Repository</label>
+                        <h2 className="text-2xl font-syne font-extrabold text-slate-900 mb-6 px-1">Filters</h2>
                         <div className="relative group">
-                            <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <span className="material-symbols-outlined text-blue-300 text-xl">search</span>
+                            <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <span className="material-symbols-outlined text-slate-400 text-xl">search</span>
                             </span>
                             <input
-                                className="pl-10 block w-full rounded-xl border-white/20 bg-white/10 text-sm text-white placeholder-blue-200/50 focus:border-white focus:ring-white/20 py-3 transition-shadow"
-                                placeholder="e.g. 'Invoice' or 'Lead'..."
+                                className="pl-12 block w-full rounded-2xl border-slate-200 bg-slate-50 text-sm text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 py-4 transition-all"
+                                placeholder="Search repository..."
                                 type="text"
                                 value={filterSearch}
                                 onChange={(e) => setFilterSearch(e.target.value)}
@@ -133,191 +121,218 @@ const RepositoryView: React.FC<RepositoryViewProps> = ({ onFlowSelect }) => {
                         </div>
                     </div>
 
-                    {/* Dept Filter */}
+                    {/* Tiers Filter */}
                     <div>
-                        <label className="text-xs font-bold text-blue-200 uppercase tracking-wider mb-3 block flex justify-between">
-                            Departments
-                            {filterDept.size > 0 && <span onClick={() => setFilterDept(new Set())} className="text-[10px] underline cursor-pointer hover:text-white">Clear</span>}
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[2px] mb-4 block flex justify-between px-1">
+                            Marketplace Tiers
                         </label>
-                        <div className="space-y-2">
-                            {Object.values(AppDepts).map(d => (
-                                <label key={d} onClick={() => toggleDept(d)} className="flex items-center gap-3 cursor-pointer group hover:bg-white/5 p-2 rounded-lg transition-colors">
-                                    <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${filterDept.has(d) ? 'bg-white border-white' : 'border-blue-300/50 group-hover:border-white/80'}`}>
-                                        {filterDept.has(d) && <span className="material-symbols-outlined text-[10px] text-blue-600 font-bold">check</span>}
-                                    </div>
-                                    <span className={`text-sm ${filterDept.has(d) ? 'text-white font-bold' : 'text-blue-100 group-hover:text-white'}`}>{d}</span>
-                                </label>
+                        <div className="grid grid-cols-2 gap-2">
+                            {['Standard', 'GEM', 'GPT', 'SKILL'].map(t => (
+                                <button
+                                    key={t}
+                                    onClick={() => toggleSet(filterTier, setFilterTier, t)}
+                                    className={`py-3 px-2 rounded-xl text-xs font-bold transition-all border ${filterTier.has(t) ? 'bg-slate-900 text-white border-slate-900 shadow-lg' : 'bg-white text-slate-600 border-slate-100 hover:border-slate-300'}`}
+                                >
+                                    {t}
+                                </button>
                             ))}
                         </div>
                     </div>
 
-                    {/* Level Filter */}
+                    {/* Dept Filter */}
                     <div>
-                        <label className="text-xs font-bold text-blue-200 uppercase tracking-wider mb-3 block flex justify-between">
-                            Automation Level
-                            {filterLevel.size > 0 && <span onClick={() => setFilterLevel(new Set())} className="text-[10px] underline cursor-pointer hover:text-white">Clear</span>}
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[2px] mb-4 block flex justify-between px-1">
+                            Departments
                         </label>
-                        <div className="space-y-2">
-                            {[
-                                { id: 'hitl', label: 'Human in the Loop', icon: 'person' },
-                                { id: 'triggered', label: 'Triggered Auto', icon: 'bolt' },
-                                { id: 'background', label: 'Background', icon: 'settings_suggest' }
-                            ].map(l => (
-                                <label key={l.id} onClick={() => toggleLevel(l.id)} className={`flex items-center gap-3 cursor-pointer p-2 rounded-lg border transition-all ${filterLevel.has(l.id) ? 'bg-white/10 border-white/40 shadow-sm' : 'border-transparent hover:bg-white/5'}`}>
-                                    <span className="material-symbols-outlined text-sm text-blue-200">{l.icon}</span>
-                                    <span className="text-sm text-blue-100 flex-1">{l.label}</span>
-                                    {filterLevel.has(l.id) && <span className="w-2 h-2 rounded-full bg-emerald-400 box-shadow-glow"></span>}
-                                </label>
-                            ))}
+                        <div className="space-y-1">
+                            {Object.values(AppDepts).map(d => {
+                                const count = allFlows.filter(f => f.dept === d).length;
+                                return (
+                                    <label key={d} onClick={() => toggleSet(filterDept, setFilterDept, d)} className={`flex items-center gap-3 cursor-pointer p-3 rounded-xl transition-all ${filterDept.has(d) ? 'bg-blue-50 text-blue-700' : 'hover:bg-slate-50 text-slate-600'}`}>
+                                        <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${filterDept.has(d) ? 'bg-blue-600 border-blue-600' : 'border-slate-300'}`}>
+                                            {filterDept.has(d) && <span className="material-symbols-outlined text-[14px] text-white font-bold">check</span>}
+                                        </div>
+                                        <span className="text-sm font-semibold flex-1">{d}</span>
+                                        <span className="text-[10px] font-black opacity-40">{count}</span>
+                                    </label>
+                                );
+                            })}
                         </div>
                     </div>
 
                     {/* Platform Filter */}
                     <div>
-                        <label className="text-xs font-bold text-blue-200 uppercase tracking-wider mb-3 block flex justify-between">
-                            Platform
-                            {filterPlatform.size > 0 && <span onClick={() => setFilterPlatform(new Set())} className="text-[10px] underline cursor-pointer hover:text-white">Clear</span>}
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[2px] mb-4 block flex justify-between px-1">
+                            Platforms
                         </label>
-                        <div className="space-y-1">
-                            {["Google Workspace", "Zapier", "n8n", "Make", "Custom", "API-Based", "Multi-Platform"].map(p => (
-                                <label key={p} onClick={() => togglePlatform(p)} className="flex items-center gap-3 cursor-pointer group hover:bg-white/5 p-2 rounded-lg transition-colors">
-                                    <div className={`w-3 h-3 rounded-full border flex items-center justify-center transition-all ${filterPlatform.has(p) ? 'bg-emerald-400 border-emerald-400' : 'border-blue-300/50 group-hover:border-white/80'}`}>
-                                    </div>
-                                    <span className={`text-[11px] ${filterPlatform.has(p) ? 'text-white font-bold' : 'text-blue-100 group-hover:text-white'}`}>{p}</span>
-                                </label>
+                        <div className="flex flex-wrap gap-2">
+                            {["Google Workspace", "Microsoft 365", "Slack", "Zapier", "n8n", "Make", "Custom", "Multi-Platform"].map(p => (
+                                <button
+                                    key={p}
+                                    onClick={() => toggleSet(filterPlatform, setFilterPlatform, p)}
+                                    className={`px-4 py-2 rounded-full text-[10px] font-bold border transition-all ${filterPlatform.has(p) ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-400'}`}
+                                >
+                                    {p}
+                                </button>
                             ))}
                         </div>
                     </div>
 
                     {/* Price Filter */}
                     <div>
-                        <label className="text-xs font-bold text-blue-200 uppercase tracking-wider mb-3 block">Price</label>
-                        <div className="flex bg-white/10 p-1 rounded-xl border border-white/20 shadow-inner">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[2px] mb-4 block px-1">Budget</label>
+                        <div className="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
                             {(['all', 'free', 'paid'] as const).map(option => (
                                 <button
                                     key={option}
                                     onClick={() => setFilterPriceRange(option)}
-                                    className={`flex-1 py-2 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all ${filterPriceRange === option ? 'bg-white text-blue-600 shadow-md' : 'text-blue-100 hover:text-white'}`}
+                                    className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${filterPriceRange === option ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
                                 >
                                     {option}
                                 </button>
                             ))}
                         </div>
                     </div>
-
-                    {/* Tags Filter */}
-                    <div>
-                        <label className="text-xs font-bold text-blue-200 uppercase tracking-wider mb-3 block flex justify-between">
-                            Featured Tags
-                            {filterTags.size > 0 && <span onClick={() => setFilterTags(new Set())} className="text-[10px] underline cursor-pointer hover:text-white">Clear</span>}
-                        </label>
-                        <div className="flex flex-wrap gap-2">
-                            {Array.from(new Set(allFlows.flatMap(f => f.tags || []))).slice(0, 12).map(tag => (
-                                <button
-                                    key={tag}
-                                    onClick={() => {
-                                        const newSet = new Set(filterTags);
-                                        if (newSet.has(tag)) newSet.delete(tag); else newSet.add(tag);
-                                        setFilterTags(newSet);
-                                    }}
-                                    className={`px-3 py-1.5 rounded-full text-[10px] font-bold border transition-all ${filterTags.has(tag) ? 'bg-white text-blue-600 border-white' : 'bg-white/5 border-white/20 text-blue-200 hover:border-white/40'}`}
-                                >
-                                    #{tag}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
                 </div>
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 bg-slate-50 overflow-y-auto custom-scrollbar p-4 sm:p-8 relative">
+            <main className="flex-1 overflow-y-auto custom-scrollbar relative bg-slate-50 flex flex-col">
 
-                {/* KPI Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-                    <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-6 text-white shadow-xl shadow-blue-900/10 relative overflow-hidden group">
-                        <div className="absolute -right-4 -top-4 bg-white/10 w-24 h-24 rounded-full blur-xl group-hover:scale-150 transition-transform duration-700"></div>
-                        <div className="relative z-10">
-                            <div className="text-blue-200 text-xs font-bold uppercase tracking-wider mb-2">Total App store</div>
-                            <div className="text-4xl font-display font-bold">{allFlows.length}</div>
-                            <div className="text-blue-100 text-sm mt-1 opacity-80">Universal Workflows</div>
+                {/* Hero / Header */}
+                <header className="p-8 lg:p-12 pb-6">
+                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                        <div>
+                            <h1 className="text-5xl lg:text-6xl font-syne font-black text-slate-900 tracking-tighter mb-4">
+                                The <span className="text-blue-600">Universal</span> <br />Repository
+                            </h1>
+                            <p className="text-slate-500 text-lg max-w-xl font-medium leading-relaxed">
+                                Access production-grade automation blueprints, enterprise-ready GEMs, and specialized GPT agents to scale your operations.
+                            </p>
+                        </div>
+                        <div className="flex gap-4">
+                            <div className="bg-white p-4 lg:p-6 rounded-3xl border border-slate-200 shadow-sm min-w-[160px]">
+                                <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Total Assets</span>
+                                <span className="text-3xl font-syne font-black text-slate-900">{allFlows.length}</span>
+                            </div>
+                            <div className="bg-blue-600 p-4 lg:p-6 rounded-3xl text-white shadow-xl shadow-blue-500/20 min-w-[160px]">
+                                <span className="block text-[10px] font-black text-blue-200 uppercase tracking-widest mb-2">Market Vol</span>
+                                <span className="text-3xl font-syne font-black">${allFlows.reduce((acc, f) => acc + (f.price || 0), 0).toLocaleString()}</span>
+                            </div>
                         </div>
                     </div>
-                    <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm relative">
-                        <div className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2">Your Studio</div>
-                        <div className="text-4xl font-display font-bold text-slate-800">{userFlows.length}</div>
-                        <div className="text-emerald-600 text-xs font-bold mt-2 flex items-center bg-emerald-50 w-fit px-2 py-1 rounded-full">
-                            <span className="material-symbols-outlined text-sm mr-1">bolt</span> Active Creations
-                        </div>
+                </header>
+
+                {/* Status Bar */}
+                <div className="px-8 lg:px-12 mb-8 flex items-center justify-between transition-all">
+                    <div className="flex items-center gap-4 text-sm font-bold text-slate-400">
+                        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span> {filtered.length.toLocaleString()} Blueprints Displayed</span>
+                        <span className="hidden md:inline">|</span>
+                        <span className="hidden md:flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500"></span> Marketplace 2.0 Certified</span>
                     </div>
-                    <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm relative overflow-hidden">
-                        <div className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2">Marketplace Value</div>
-                        <div className="text-4xl font-display font-bold text-slate-800">
-                            ${allFlows.reduce((acc, f) => acc + (f.price || 0), 0).toFixed(2)}
-                        </div>
-                        <div className="text-blue-600 text-[10px] font-bold mt-2 uppercase tracking-tight flex items-center gap-1">
-                            <span className="material-symbols-outlined text-xs">payments</span> Total Asset Liquidity
-                        </div>
-                    </div>
+                    {(filterDept.size > 0 || filterLevel.size > 0 || filterPlatform.size > 0 || filterTier.size > 0 || filterSearch) && (
+                        <button
+                            onClick={() => {
+                                setFilterDept(new Set()); setFilterLevel(new Set());
+                                setFilterPlatform(new Set()); setFilterTier(new Set());
+                                setFilterSearch(""); setFilterTags(new Set());
+                            }}
+                            className="text-xs font-black text-blue-600 uppercase tracking-widest hover:underline"
+                        >
+                            Reset Filters
+                        </button>
+                    )}
                 </div>
 
                 {/* Results Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 pb-20">
-                    {filtered.map(flow => {
-                        let badgeText = "Background";
-                        if (flow.category === "hitl") { badgeText = "Human Loop"; }
-                        else if (flow.category === "triggered") { badgeText = "Triggered"; }
+                <div className="px-8 lg:px-12 pb-24">
+                    {filtered.length > 0 ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+                            {filtered.map((flow, idx) => {
+                                const isPremium = flow.isPremium || flow.tier === 'GEM' || flow.tier === 'GPT';
+                                const tierColor = flow.tier === 'GEM' ? 'from-amber-400 to-orange-600' :
+                                    flow.tier === 'GPT' ? 'from-emerald-400 to-teal-600' :
+                                        flow.tier === 'SKILL' ? 'from-purple-500 to-indigo-600' : 'from-slate-700 to-slate-900';
 
-                        // Override for User Flows
-                        if ((flow as any).isUser) badgeText = "My Flow";
+                                return (
+                                    <div
+                                        key={flow.id}
+                                        onClick={() => onFlowSelect(flow)}
+                                        className={`group relative bg-white rounded-[2rem] border-2 transition-all duration-500 cursor-pointer overflow-hidden reveal-stagger ${idx < 20 ? `stagger-${idx + 1}` : ''} ${isPremium ? 'border-slate-900 shadow-xl' : 'border-transparent shadow-sm hover:shadow-xl hover:border-slate-200'}`}
+                                    >
+                                        {/* Premium Header / Bar */}
+                                        <div className={`h-2 w-full bg-gradient-to-r ${tierColor}`}></div>
 
-                        // Tailwind doesn't support dynamic class interpolation easily without safelisting 
-                        // So we use standard classes for simplicity in this port, or inline styles/helper function
-                        // For MVP: simplified colors
-                        const badgeClass = (flow as any).isUser ? "bg-purple-100 text-purple-700 ring-1 ring-purple-500/20" : (flow.category === "hitl" ? "bg-amber-50 text-amber-600" : (flow.category === "triggered" ? "bg-blue-50 text-blue-600" : "bg-slate-50 text-slate-600"));
-                        const barClass = (flow as any).isUser ? "bg-purple-600" : (flow.category === "hitl" ? "bg-amber-500" : (flow.category === "triggered" ? "bg-blue-500" : "bg-slate-500"));
+                                        <div className="p-8 pb-10 flex flex-col h-full">
+                                            {/* Meta Header */}
+                                            <div className="flex justify-between items-start mb-6">
+                                                <div className="flex flex-col gap-1.5">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="px-3 py-1 bg-slate-100 text-[9px] font-black text-slate-500 uppercase tracking-widest rounded-full">{flow.dept}</span>
+                                                        {flow.tier && flow.tier !== 'Standard' && (
+                                                            <span className={`px-3 py-1 bg-gradient-to-r ${tierColor} text-[9px] font-black text-white uppercase tracking-widest rounded-full shadow-sm`}>{flow.tier}</span>
+                                                        )}
+                                                    </div>
+                                                    <span className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1">
+                                                        <span className="material-symbols-outlined text-[12px]">layers</span>
+                                                        {flow.platform}
+                                                    </span>
+                                                </div>
+                                                <div className={`px-4 py-2 rounded-2xl text-xs font-black shadow-sm ${isPremium ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                                                    {flow.price ? `$${flow.price.toLocaleString()}` : "FREE"}
+                                                </div>
+                                            </div>
 
-                        return (
-                            <div key={flow.id} onClick={() => onFlowSelect(flow)} className="group bg-white rounded-2xl shadow-sm border border-slate-200 p-0 cursor-pointer card-hover transition-all-300 flex flex-col h-full relative overflow-hidden">
-                                <div className={`h-1.5 w-full ${barClass}`}></div>
-                                <div className="p-6 flex flex-col flex-1">
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div className="flex flex-col gap-1">
-                                            <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-600 ring-1 ring-inset ring-slate-200 uppercase tracking-wider w-fit">{flow.dept}</span>
-                                            <span className="text-[10px] font-bold text-blue-600 uppercase tracking-tight flex items-center gap-1">
-                                                <span className="material-symbols-outlined text-[12px]">hub</span>
-                                                {flow.platform || "Google Workspace Studio"}
-                                            </span>
+                                            {/* Content */}
+                                            <div className="flex-1 space-y-4">
+                                                <h3 className="text-2xl font-syne font-black text-slate-900 leading-[1.1] group-hover:text-blue-600 transition-colors">
+                                                    {flow.name}
+                                                </h3>
+                                                <p className="text-slate-500 text-sm font-medium line-clamp-3 leading-relaxed">
+                                                    {flow.action}
+                                                </p>
+                                            </div>
+
+                                            {/* Footer Info */}
+                                            <div className="pt-8 mt-6 border-t border-slate-100 flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
+                                                        <span className="material-symbols-outlined text-sm text-slate-400">bolt</span>
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Efficiency</span>
+                                                        <span className="text-[11px] font-bold text-slate-700">{flow.timeSaved || 'Standard'}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="material-symbols-outlined text-slate-200 group-hover:text-blue-600 transform group-hover:translate-x-1 transition-all">arrow_forward</div>
+                                            </div>
                                         </div>
-                                        <div className="bg-slate-900 text-white px-2 py-1 rounded-md text-[10px] font-bold shadow-sm">
-                                            {flow.price ? `$${flow.price.toFixed(2)}` : "FREE"}
-                                        </div>
+
+                                        {/* Hover Overlay for Standard items */}
+                                        {!isPremium && <div className="absolute inset-x-0 bottom-0 h-1 bg-blue-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>}
                                     </div>
-                                    <h4 className="font-display font-bold text-slate-900 text-xl leading-tight group-hover:text-blue-600 transition-colors mb-2">{flow.name}</h4>
-                                    <p className="text-sm text-slate-500 line-clamp-2 mb-4 flex-1 font-medium">{flow.action}</p>
-
-                                    {flow.tags && flow.tags.length > 0 && (
-                                        <div className="flex flex-wrap gap-1 mb-6">
-                                            {flow.tags.slice(0, 3).map((tag: string) => (
-                                                <span key={tag} className="px-1.5 py-0.5 bg-slate-50 text-slate-400 text-[10px] font-bold rounded uppercase">#{tag}</span>
-                                            ))}
-                                        </div>
-                                    )}
-
-                                    <div className="flex items-center justify-between pt-4 border-t border-slate-100 mt-auto">
-                                        <div className={`flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded ${badgeClass}`}>
-                                            {badgeText}
-                                        </div>
-                                        <div className="text-xs text-slate-400 font-bold flex items-center">
-                                            <span className="material-symbols-outlined text-sm mr-1">timelapse</span>
-                                            {flow.timeSaved}
-                                        </div>
-                                    </div>
-                                </div>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center py-40 bg-white rounded-[3rem] border-2 border-dashed border-slate-200">
+                            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-6">
+                                <span className="material-symbols-outlined text-4xl text-slate-300">search_off</span>
                             </div>
-                        );
-                    })}
+                            <h3 className="text-2xl font-syne font-black text-slate-900 mb-2">No Matching Blueprints</h3>
+                            <p className="text-slate-500 font-medium">Try adjusting your filters or search query.</p>
+                            <button
+                                onClick={() => {
+                                    setFilterDept(new Set()); setFilterLevel(new Set());
+                                    setFilterPlatform(new Set()); setFilterTier(new Set());
+                                    setFilterSearch("");
+                                }}
+                                className="mt-8 px-8 py-3 bg-slate-900 text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-slate-800 transition-all"
+                            >
+                                Clear All
+                            </button>
+                        </div>
+                    )}
                 </div>
             </main>
         </div>

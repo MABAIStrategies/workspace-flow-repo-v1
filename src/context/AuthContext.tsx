@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
-import { Session, User } from '@supabase/supabase-js';
 
 interface AuthContextType {
     session: Session | null;
@@ -18,35 +18,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [isDemo, setIsDemo] = useState(false);
 
     useEffect(() => {
+        let subscription: any;
+
         const checkSession = async () => {
-            // 1. Check Demo Mode
-            const demoActive = localStorage.getItem('demo_mode') === 'true';
-            setIsDemo(demoActive);
+            try {
+                // 1. Check Demo Mode
+                const demoActive = localStorage.getItem('demo_mode') === 'true';
+                setIsDemo(demoActive);
 
-            if (demoActive) {
-                const mockUser = { id: 'demo-user', email: 'demo@example.com' } as User;
-                setUser(mockUser);
-                setSession({ user: mockUser } as Session);
+                if (demoActive) {
+                    const mockUser = { id: 'demo-user', email: 'demo@example.com' } as User;
+                    setUser(mockUser);
+                    setSession({ user: mockUser } as Session);
+                    setLoading(false);
+                    return;
+                }
+
+                // 2. Real Supabase Session
+                const { data: { session: currentSession } } = await supabase.auth.getSession();
+                setSession(currentSession);
+                setUser(currentSession?.user ?? null);
+
+                // 3. Listen for changes
+                const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+                    setSession(session);
+                    setUser(session?.user ?? null);
+                });
+                subscription = data.subscription;
+            } catch (err) {
+                console.error("Auth initialization error:", err);
+            } finally {
                 setLoading(false);
-                return;
             }
-
-            // 2. Real Supabase Session
-            const { data: { session } } = await supabase.auth.getSession();
-            setSession(session);
-            setUser(session?.user ?? null);
-            setLoading(false);
-
-            // 3. Listen for changes
-            const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-                setSession(session);
-                setUser(session?.user ?? null);
-            });
-
-            return () => subscription.unsubscribe();
         };
 
         checkSession();
+        return () => {
+            if (subscription) subscription.unsubscribe();
+        };
     }, []);
 
     return (

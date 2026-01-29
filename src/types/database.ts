@@ -1,7 +1,9 @@
 // Database Types for Workspace Flow Agent
 
-export type Platform = 
+export type Platform =
   | 'Google Workspace'
+  | 'Microsoft 365'
+  | 'Slack'
   | 'Zapier'
   | 'n8n'
   | 'Make'
@@ -9,7 +11,7 @@ export type Platform =
   | 'API-Based'
   | 'Multi-Platform';
 
-export type Department = 
+export type Department =
   | 'Sales'
   | 'Marketing'
   | 'HR'
@@ -18,7 +20,7 @@ export type Department =
   | 'Executive'
   | 'IT/Eng';
 
-export type Category = 
+export type Category =
   | 'hitl'      // Human-in-the-loop
   | 'triggered' // Event-triggered
   | 'background'; // Background automation
@@ -33,17 +35,17 @@ export interface Workflow {
   trigger_event: string | null;
   action_chain: string | null;
   tools: string[] | null;
-  
+
   // Platform & Monetization
   platform: Platform;
   price: number; // Decimal in USD
   is_premium: boolean;
   tags: string[] | null;
-  
+
   // Visual Properties
   color_theme: string | null;
   spine_height: number;
-  
+
   // Publishing
   is_public: boolean;
   created_at: string; // ISO timestamp

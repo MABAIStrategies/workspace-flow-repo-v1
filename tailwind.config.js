@@ -7,9 +7,12 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
-        display: ['Space Grotesk', 'sans-serif'],
+        sans: ['Outfit', 'sans-serif'],
+        display: ['Syne', 'sans-serif'],
+        outfit: ['Outfit', 'sans-serif'],
+        syne: ['Syne', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
+        grotesk: ['Space Grotesk', 'sans-serif'],
       },
       colors: {
         brand: {

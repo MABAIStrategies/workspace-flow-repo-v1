@@ -6,31 +6,43 @@ export const generateWorkflow = async (prompt: string, dept: string, level: stri
     }
 
     const systemPrompt = `
-    You are an expert Automation Architect specializing in ${platform}.
-    Your goal is to design a specific, actionable workflow for the ${platform} ecosystem that the user can immediately implement.
+    You are an expert Universal Automation Architect specializing in ${platform}.
+    Your goal is to design a high-value, production-grade automation workflow for the ${platform} ecosystem.
     
-    Context:
+    Architecture Context:
     - Department: ${dept}
-    - Automation Level: ${level} (HITL=Human in Loop, Triggered=Event Driven, Background=Fully Auto)
+    - Automation Style: ${level} (HITL=Human in Loop, Triggered=Event-Driven, Background=Fully Autonomous)
     - Available Tools: ${tools.join(', ')}
-    - Target Platform: ${platform}
+    - Target Execution Platform: ${platform}
     
-    User Request: "${prompt}"
+    User Intent: "${prompt}"
 
-    Output Format:
-    Return a JSON object ONLY (no markdown, no explanation), with this exact structure:
+    Guidelines for ${platform}:
+    1. If Zapier/Make: Focus on specific triggers/actions (e.g., Webhooks, Search Step, Iterator).
+    2. If Google/Microsoft: Focus on App Script or Power Automate logic.
+    3. If multi-platform: Explain how data moves between systems securely.
+
+    Output Requirements:
+    Return a valid JSON object ONLY. Do not include any text before or after the JSON.
+    
+    JSON Structure:
     {
-        "title": "A short, catchy name for this flow",
-        "desc": "A 2-3 sentence summary explaining what the workflow does and the business value.",
+        "title": "A short, professional name",
+        "desc": "A concise summary of the workflow's architecture and the business ROI.",
         "platform": "${platform}",
-        "steps": ["Step 1 with specific action", "Step 2 with specific action", "Step 3...", "Step 4..."],
-        "implementationPrompt": "A detailed, copy-paste-ready instruction or prompt the user can use within ${platform} to create this exact automation. Be highly specific to the ${platform} interface."
+        "steps": [
+            "Step 1: [Specific Logic]",
+            "Step 2: [Specific Logic]",
+            "Step 3: [Specific Logic]"
+        ],
+        "implementationPrompt": "A detailed, technical specification that the user can copy-paste into an AI assistant (like Gemini, ChatGPT, or the platform's native AI) to generate the actual code, script, or configuration. Include specific variable names, API endpoints if relevant, and error handling logic."
     }
     `;
 
+
     // FIXED: Updated to use correct model names
     const models = ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash'];
-    
+
     let lastError;
 
     for (const model of models) {
@@ -45,7 +57,7 @@ export const generateWorkflow = async (prompt: string, dept: string, level: stri
             });
 
             const data = await response.json();
-            
+
             if (!response.ok) {
                 // If it's a 404 (Not Found) or 400 (Bad Request), try next model
                 const apiError = data.error?.message || response.statusText;
@@ -55,10 +67,10 @@ export const generateWorkflow = async (prompt: string, dept: string, level: stri
             }
 
             const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-            
+
             if (!text) {
-                 // Success response but no text? weird, but try next
-                 continue;
+                // Success response but no text? weird, but try next
+                continue;
             }
 
             // Clean markdown code blocks if present

@@ -179,7 +179,7 @@ const RepositoryView: React.FC<RepositoryViewProps> = ({ onFlowSelect }) => {
                             {filterPlatform.size > 0 && <span onClick={() => setFilterPlatform(new Set())} className="text-[10px] underline cursor-pointer hover:text-white">Clear</span>}
                         </label>
                         <div className="space-y-1">
-                            {["Google Workspace", "Zapier", "n8n", "Make", "Custom", "API-Based", "Multi-Platform"].map(p => (
+                            {["Google Workspace", "Microsoft 365", "Slack", "Zapier", "n8n", "Make", "Custom", "API-Based", "Multi-Platform"].map(p => (
                                 <label key={p} onClick={() => togglePlatform(p)} className="flex items-center gap-3 cursor-pointer group hover:bg-white/5 p-2 rounded-lg transition-colors">
                                     <div className={`w-3 h-3 rounded-full border flex items-center justify-center transition-all ${filterPlatform.has(p) ? 'bg-emerald-400 border-emerald-400' : 'border-blue-300/50 group-hover:border-white/80'}`}>
                                     </div>
@@ -187,6 +187,7 @@ const RepositoryView: React.FC<RepositoryViewProps> = ({ onFlowSelect }) => {
                                 </label>
                             ))}
                         </div>
+
                     </div>
 
                     {/* Price Filter */}

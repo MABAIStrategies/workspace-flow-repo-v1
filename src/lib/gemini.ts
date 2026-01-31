@@ -41,7 +41,7 @@ export const generateWorkflow = async (prompt: string, dept: string, level: stri
 
 
     // FIXED: Updated to use correct model names
-    const models = ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash'];
+    const models = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.0-pro'];
 
     let lastError;
 
@@ -79,7 +79,7 @@ export const generateWorkflow = async (prompt: string, dept: string, level: stri
 
         } catch (error) {
             console.error(`Gemini Attempt Error (${model}):`, error);
-            lastError = error;
+            lastError = error instanceof Error ? error.message : String(error);
             // Continue to next model
         }
     }

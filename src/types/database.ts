@@ -41,6 +41,8 @@ export interface Workflow {
   price: number; // Decimal in USD
   is_premium: boolean;
   tags: string[] | null;
+  rank?: number;
+  tier?: string;
 
   // Visual Properties
   color_theme: string | null;

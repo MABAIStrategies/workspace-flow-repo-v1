@@ -3,6 +3,7 @@ import RepositoryView from './RepositoryView';
 import StudioView from './StudioView';
 import SalesQuestView from './SalesQuestView';
 import { supabase } from '../lib/supabase';
+import type { UIWorkflow } from '../types/ui';
 
 const ProfileForm: React.FC<{ name: string, setName: (n: string) => void, onSave: () => void, loading: boolean, msg: string }> = ({ name, setName, onSave, loading, msg }) => {
     return (
@@ -34,7 +35,7 @@ const ProfileForm: React.FC<{ name: string, setName: (n: string) => void, onSave
 const MainApp: React.FC = () => {
     const [view, setView] = useState<'repo' | 'studio' | 'profile' | 'quest'>('repo');
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const [selectedFlow, setSelectedFlow] = useState<any>(null);
+    const [selectedFlow, setSelectedFlow] = useState<UIWorkflow | null>(null);
     const [userName, setUserName] = useState('User');
     const [loading, setLoading] = useState(false);
     const [msg, setMsg] = useState<string>('');
@@ -338,7 +339,7 @@ const MainApp: React.FC = () => {
                                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Cost</p>
                                         <div className="flex items-baseline gap-2">
                                             <span className="text-3xl font-syne font-black text-slate-900">{selectedFlow.price ? `$${selectedFlow.price.toLocaleString()}` : "FREE"}</span>
-                                            {selectedFlow.price > 0 && <span className="text-xs text-slate-500 font-bold">USD</span>}
+                                            {(selectedFlow.price || 0) > 0 && <span className="text-xs text-slate-500 font-bold">USD</span>}
                                         </div>
                                     </div>
                                     {selectedFlow.isPremium && (

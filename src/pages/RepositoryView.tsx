@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { flowData, AppDepts } from '../lib/data';
+import type { UIWorkflow } from '../types/ui';
+import type { Workflow as DatabaseWorkflow } from '../types/database';
 
 interface RepositoryViewProps {
-    onFlowSelect: (flow: any) => void;
+    onFlowSelect: (flow: UIWorkflow) => void;
 }
 
 const RepositoryView: React.FC<RepositoryViewProps> = ({ onFlowSelect }) => {
@@ -13,7 +15,7 @@ const RepositoryView: React.FC<RepositoryViewProps> = ({ onFlowSelect }) => {
     const [filterTier, setFilterTier] = useState<Set<string>>(new Set());
     const [filterPriceRange, setFilterPriceRange] = useState<'all' | 'free' | 'paid'>('all');
     const [filterTags, setFilterTags] = useState<Set<string>>(new Set());
-    const [userFlows, setUserFlows] = useState<any[]>([]);
+    const [userFlows, setUserFlows] = useState<UIWorkflow[]>([]);
 
     // Load User Flows from DB
     React.useEffect(() => {
@@ -21,7 +23,7 @@ const RepositoryView: React.FC<RepositoryViewProps> = ({ onFlowSelect }) => {
             const { data } = await import('../lib/supabase').then(m => m.supabase.from('workflows').select('*').order('created_at', { ascending: false }));
 
             if (data) {
-                const mapped = data.map((row: any) => {
+                const mapped = data.map((row: DatabaseWorkflow) => {
                     let meta = { dept: 'General', level: 'hitl', tools: [] };
                     try {
                         if (row.description && row.description.startsWith('{')) {
@@ -48,9 +50,9 @@ const RepositoryView: React.FC<RepositoryViewProps> = ({ onFlowSelect }) => {
                         isPremium: row.is_premium || false,
                         tier: row.tier || 'Standard',
                         tags: row.tags || [],
-                        steps: (meta as any).steps || [],
+                        steps: (meta as { steps?: string[] }).steps || [],
                         timeSaved: 'Draft',
-                        action: row.description && !row.description.startsWith('{') ? row.description : (meta as any).desc || 'Custom Workflow',
+                        action: row.description && !row.description.startsWith('{') ? row.description : (meta as { desc?: string }).desc || 'Custom Workflow',
                         isUser: true,
                         raw: row
                     };
@@ -62,7 +64,7 @@ const RepositoryView: React.FC<RepositoryViewProps> = ({ onFlowSelect }) => {
     }, []);
 
     // Combine Lists
-    const allFlows = [...userFlows, ...flowData];
+    const allFlows: UIWorkflow[] = [...userFlows, ...(flowData as unknown as UIWorkflow[])];
 
     const toggleSet = (set: Set<string>, setter: (s: Set<string>) => void, val: string) => {
         const newSet = new Set(set);
@@ -97,7 +99,7 @@ const RepositoryView: React.FC<RepositoryViewProps> = ({ onFlowSelect }) => {
         if (a.tier !== 'GEM' && b.tier === 'GEM') return 1;
         if (a.isUser && !b.isUser) return -1;
         if (!a.isUser && b.isUser) return 1;
-        return a.rank - b.rank;
+        return (a.rank || 0) - (b.rank || 0);
     });
 
     return (
@@ -166,7 +168,7 @@ const RepositoryView: React.FC<RepositoryViewProps> = ({ onFlowSelect }) => {
                             Platforms
                         </label>
                         <div className="flex flex-wrap gap-2">
-                            {["Google Workspace", "Microsoft 365", "Slack", "Zapier", "n8n", "Make", "Custom", "Multi-Platform"].map(p => (
+                            {["Google Workspace", "Microsoft 365", "Slack", "Zapier", "n8n", "Make", "Custom", "API-Based", "Multi-Platform"].map(p => (
                                 <button
                                     key={p}
                                     onClick={() => toggleSet(filterPlatform, setFilterPlatform, p)}

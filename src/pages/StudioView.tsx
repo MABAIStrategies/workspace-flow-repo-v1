@@ -2,9 +2,7 @@ import React, { useState } from 'react';
 import { AppTools, AppDepts } from '../lib/data';
 import type { Platform } from '../types/database';
 
-interface StudioViewProps {
-    // Props if needed
-}
+// Props interface removed - component takes no props
 
 interface Workflow {
     id: number;
@@ -14,7 +12,7 @@ interface Workflow {
     height: number;
 }
 
-const StudioView: React.FC<StudioViewProps> = () => {
+const StudioView: React.FC = () => {
     // State
     const [library, setLibrary] = useState<Workflow[]>([]);
     const [dept, setDept] = useState("Sales");
@@ -37,7 +35,7 @@ const StudioView: React.FC<StudioViewProps> = () => {
         const fetchLibrary = async () => {
             const { data } = await import('../lib/supabase').then(m => m.supabase.from('workflows').select('*').order('created_at', { ascending: false }));
             if (data) {
-                setLibrary(data.map((row: any) => {
+                setLibrary(data.map((row: { id: number; name: string; description: string }) => {
                     let meta = { dept: 'General', color: 'from-slate-900', height: 28 };
                     try { meta = JSON.parse(row.description).meta || meta; } catch (e) { console.warn(`Failed to parse metadata for workflow "${row.name}":`, e); }
                     return { id: row.id, name: row.name, dept: meta.dept, color: meta.color, height: meta.height };
@@ -65,7 +63,7 @@ const StudioView: React.FC<StudioViewProps> = () => {
 
             setGeneratedResult(result);
         } catch (e) {
-            alert("AI Error: " + e);
+            alert("AI Error: " + (e instanceof Error ? e.message : String(e)));
             // Fallback for demo if key fails
             setGeneratedResult({
                 title: "Manual Workflow",
@@ -164,7 +162,7 @@ const StudioView: React.FC<StudioViewProps> = () => {
                 const parsed = JSON.parse(data.description);
                 desc = parsed.desc || "";
                 steps = parsed.steps || [];
-            } catch (e) { console.warn(`Failed to parse description for workflow "${data.name}":`, e); }
+            } catch { /* Ignore parse errors */ }
 
             setGeneratedResult({
                 title: data.name,

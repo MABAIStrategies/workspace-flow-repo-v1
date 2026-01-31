@@ -63,7 +63,7 @@ const StudioView: React.FC = () => {
 
             setGeneratedResult(result);
         } catch (e) {
-            alert("AI Error: " + e);
+            alert("AI Error: " + (e instanceof Error ? e.message : String(e)));
             // Fallback for demo if key fails
             setGeneratedResult({
                 title: "Manual Workflow",

@@ -339,7 +339,7 @@ const MainApp: React.FC = () => {
                                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Cost</p>
                                         <div className="flex items-baseline gap-2">
                                             <span className="text-3xl font-syne font-black text-slate-900">{selectedFlow.price ? `$${selectedFlow.price.toLocaleString()}` : "FREE"}</span>
-                                            {selectedFlow.price > 0 && <span className="text-xs text-slate-500 font-bold">USD</span>}
+                                            {(selectedFlow.price || 0) > 0 && <span className="text-xs text-slate-500 font-bold">USD</span>}
                                         </div>
                                     </div>
                                     {selectedFlow.isPremium && (

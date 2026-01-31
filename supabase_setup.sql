@@ -57,6 +57,8 @@ create table workflows (
   platform text default 'Google Workspace' check (
     platform in (
       'Google Workspace',
+      'Microsoft 365',
+      'Slack',
       'Zapier',
       'n8n',
       'Make',

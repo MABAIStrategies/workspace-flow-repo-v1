@@ -2,9 +2,7 @@ import React, { useState } from 'react';
 import { AppTools, AppDepts } from '../lib/data';
 import type { Platform } from '../types/database';
 
-interface StudioViewProps {
-    // Props if needed
-}
+// Props interface removed - component takes no props
 
 interface Workflow {
     id: number;
@@ -14,7 +12,7 @@ interface Workflow {
     height: number;
 }
 
-const StudioView: React.FC<StudioViewProps> = () => {
+const StudioView: React.FC = () => {
     // State
     const [library, setLibrary] = useState<Workflow[]>([]);
     const [dept, setDept] = useState("Sales");
@@ -37,9 +35,9 @@ const StudioView: React.FC<StudioViewProps> = () => {
         const fetchLibrary = async () => {
             const { data } = await import('../lib/supabase').then(m => m.supabase.from('workflows').select('*').order('created_at', { ascending: false }));
             if (data) {
-                setLibrary(data.map((row: any) => {
+                setLibrary(data.map((row: { id: number; name: string; description: string }) => {
                     let meta = { dept: 'General', color: 'from-slate-900', height: 28 };
-                    try { meta = JSON.parse(row.description).meta || meta; } catch (e) { }
+                    try { meta = JSON.parse(row.description).meta || meta; } catch { /* Ignore parse errors */ }
                     return { id: row.id, name: row.name, dept: meta.dept, color: meta.color, height: meta.height };
                 }));
             }
@@ -164,7 +162,7 @@ const StudioView: React.FC<StudioViewProps> = () => {
                 const parsed = JSON.parse(data.description);
                 desc = parsed.desc || "";
                 steps = parsed.steps || [];
-            } catch (e) { }
+            } catch { /* Ignore parse errors */ }
 
             setGeneratedResult({
                 title: data.name,

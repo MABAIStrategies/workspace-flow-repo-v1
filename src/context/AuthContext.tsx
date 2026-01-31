@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import type { Session, User } from '@supabase/supabase-js';
+import type { Session, User, Subscription } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 
 interface AuthContextType {
@@ -18,7 +18,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [isDemo, setIsDemo] = useState(false);
 
     useEffect(() => {
-        let subscription: any;
+        let subscription: Subscription | null = null;
 
         const checkSession = async () => {
             try {

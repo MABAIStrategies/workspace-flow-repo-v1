@@ -1,45 +1,10 @@
 import React, { useState } from 'react';
 import { flowData, AppDepts } from '../lib/data';
+import type { UIWorkflow } from '../types/ui';
+import type { Workflow as DatabaseWorkflow } from '../types/database';
 
 interface RepositoryViewProps {
-    onFlowSelect: (flow: Workflow) => void;
-}
-
-interface DatabaseWorkflow {
-    id: number;
-    name: string;
-    description: string;
-    category?: string;
-    department?: string;
-    tools?: string[];
-    platform?: string;
-    price?: number;
-    is_premium?: boolean;
-    tier?: string;
-    tags?: string[];
-    rank?: number;
-}
-
-interface Workflow {
-    id: string | number;
-    rank: number;
-    name: string;
-    category: string;
-    dept: string;
-    tools: string[];
-    platform: string;
-    price?: number;
-    isPremium?: boolean;
-    tier?: string;
-    tags: string[];
-    steps: string[];
-    timeSaved: string;
-    action: string;
-    isUser?: boolean;
-    raw?: DatabaseWorkflow;
-    complexity?: string;
-    tip?: string;
-    trigger?: string;
+    onFlowSelect: (flow: UIWorkflow) => void;
 }
 
 const RepositoryView: React.FC<RepositoryViewProps> = ({ onFlowSelect }) => {
@@ -50,7 +15,7 @@ const RepositoryView: React.FC<RepositoryViewProps> = ({ onFlowSelect }) => {
     const [filterTier, setFilterTier] = useState<Set<string>>(new Set());
     const [filterPriceRange, setFilterPriceRange] = useState<'all' | 'free' | 'paid'>('all');
     const [filterTags, setFilterTags] = useState<Set<string>>(new Set());
-    const [userFlows, setUserFlows] = useState<Workflow[]>([]);
+    const [userFlows, setUserFlows] = useState<UIWorkflow[]>([]);
 
     // Load User Flows from DB
     React.useEffect(() => {
@@ -99,7 +64,7 @@ const RepositoryView: React.FC<RepositoryViewProps> = ({ onFlowSelect }) => {
     }, []);
 
     // Combine Lists
-    const allFlows: Workflow[] = [...userFlows, ...(flowData as Workflow[])];
+    const allFlows: UIWorkflow[] = [...userFlows, ...(flowData as unknown as UIWorkflow[])];
 
     const toggleSet = (set: Set<string>, setter: (s: Set<string>) => void, val: string) => {
         const newSet = new Set(set);

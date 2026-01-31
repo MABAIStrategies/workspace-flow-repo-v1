@@ -30,8 +30,12 @@ const Login: React.FC = () => {
                 if (error) throw error;
                 navigate('/app');
             }
-        } catch (error: any) {
-            alert(error.message);
+        } catch (error) {
+            if (error instanceof Error) {
+                alert(error.message);
+            } else {
+                alert('An unexpected error occurred during authentication.');
+            }
         } finally {
             setLoading(false);
         }

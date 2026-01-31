@@ -39,7 +39,7 @@ const StudioView: React.FC<StudioViewProps> = () => {
             if (data) {
                 setLibrary(data.map((row: any) => {
                     let meta = { dept: 'General', color: 'from-slate-900', height: 28 };
-                    try { meta = JSON.parse(row.description).meta || meta; } catch (e) { }
+                    try { meta = JSON.parse(row.description).meta || meta; } catch (e) { console.warn(`Failed to parse metadata for workflow "${row.name}":`, e); }
                     return { id: row.id, name: row.name, dept: meta.dept, color: meta.color, height: meta.height };
                 }));
             }
@@ -164,7 +164,7 @@ const StudioView: React.FC<StudioViewProps> = () => {
                 const parsed = JSON.parse(data.description);
                 desc = parsed.desc || "";
                 steps = parsed.steps || [];
-            } catch (e) { }
+            } catch (e) { console.warn(`Failed to parse description for workflow "${data.name}":`, e); }
 
             setGeneratedResult({
                 title: data.name,

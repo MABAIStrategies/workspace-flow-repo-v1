@@ -36,7 +36,7 @@ const RepositoryView: React.FC<RepositoryViewProps> = ({ onFlowSelect }) => {
                                 };
                             }
                         }
-                    } catch { /* Ignore JSON parse errors */ }
+                    } catch (e) { console.warn(`Failed to parse metadata for workflow "${row.name}":`, e); }
 
                     return {
                         id: `db-${row.id}`,

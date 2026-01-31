@@ -37,7 +37,7 @@ const StudioView: React.FC = () => {
             if (data) {
                 setLibrary(data.map((row: { id: number; name: string; description: string }) => {
                     let meta = { dept: 'General', color: 'from-slate-900', height: 28 };
-                    try { meta = JSON.parse(row.description).meta || meta; } catch { /* Ignore parse errors */ }
+                    try { meta = JSON.parse(row.description).meta || meta; } catch (e) { console.warn(`Failed to parse metadata for workflow "${row.name}":`, e); }
                     return { id: row.id, name: row.name, dept: meta.dept, color: meta.color, height: meta.height };
                 }));
             }

@@ -1,7 +1,17 @@
 {
-  "version": 2,
-  "buildCommand": "npx remotion bundle src/index.ts build",
-  "outputDirectory": "build",
-  "framework": null,
-  "installCommand": "npm install"
+    "version": 2,
+    "buildCommand": "tsc -b && vite build",
+    "outputDirectory": "dist",
+    "framework": "vite",
+    "installCommand": "npm install",
+    "routes": [
+          {
+                  "src": "/assets/(.*)",
+                  "dest": "/assets/$1"
+          },
+          {
+                  "src": "/(.*)",
+                  "dest": "/index.html"
+          }
+    ]
 }

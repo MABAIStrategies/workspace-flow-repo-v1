@@ -1,0 +1,7 @@
+{
+  "version": 2,
+  "buildCommand": "npx remotion bundle src/index.ts build",
+  "outputDirectory": "build",
+  "framework": null,
+  "installCommand": "npm install"
+}
